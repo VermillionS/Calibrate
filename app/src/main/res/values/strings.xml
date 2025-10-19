@@ -1,0 +1,55 @@
+<resources>
+    <string name="app_name">Calibrate</string>
+    <string name="hint_prediction_title">Prediction (e.g., “It rains tomorrow”)</string>
+    <string name="hint_probability">Probability (0–100)%</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_resolve_yes">Resolve: Yes</string>
+    <string name="btn_resolve_no">Resolve: No</string>
+    <string name="chart_desc">Calibration curve</string>
+    <string name="home">Home</string>
+    <string name="graphs">Graphs</string>
+    <string name="settings">Settings</string>
+    <string name="AppInformation">Calibrate helps you improve the accuracy of your probabilistic forecasting. Each prediction records how confident you were that an outcome would happen. Once resolved, your calibration — how often your predictions come true is measured and visualized. \nThe Calibration chart shows observed frequencies vs. forecast probabilities. A perfectly calibrated forecaster’s points will lie on the diagonal line.\nThe Sharpness chart shows how often you use each probability range. The Score chart tracks your forecasting performance over time using two complementary measures: \n• Brier score: measures the mean squared error between your predicted probabilities and actual outcomes (lower is better). \n• Log loss: penalizes overconfident incorrect predictions more strongly (also lower is better). \nTogether, these graphs help you calibrate your intuitions and see whether your predictions — and confidence — are improving over time.</string>
+    <string name="edit_prediction">Edit Prediction</string>
+    <string name="title">Title</string>
+    <string name="probability_0_100">Probability (0–100)%</string>
+    <string name="description">Description</string>
+    <string name="resolution">Resolution</string>
+    <string name="unresolved">Unresolved</string>
+    <string name="no">NO</string>
+    <string name="yes">YES</string>
+    <string name="tag">Tag</string>
+    <string name="edit_tag">Edit Tag</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="description_optional">Description (optional)</string>
+    <string name="date_range">Date range</string>
+    <string name="from_yyyy_mm_dd">From (yyyy-MM-dd)</string>
+    <string name="to_yyyy_mm_dd">To (yyyy-MM-dd)</string>
+    <string name="probability_range">Probability range (%)</string>
+    <string name="min">Min</string>
+    <string name="max">Max</string>
+    <string name="resolved_status">Resolved status</string>
+    <string name="calibration">Calibration</string>
+    <string name="sharpness">Sharpness</string>
+    <string name="score">Score</string>
+    <string name="filter">Filter</string>
+    <string name="no_data_to_display">No data to display</string>
+    <string name="sort">Sort</string>
+    <string name="add">Add</string>
+    <string name="theme">Theme</string>
+    <string name="information">Information</string>
+    <string name="data">Data</string>
+    <string name="export_predictions_to_file">Export predictions to file</string>
+    <string name="import_predictions_from_file">Import predictions from file</string>
+    <string-array name="pref_theme_entries">
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+    <string-array name="pref_theme_values">
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+</resources>

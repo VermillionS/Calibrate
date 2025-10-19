@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ListPreference
+        android:key="pref_theme"
+        android:title="App theme"
+        android:summary="Choose a color theme"
+        android:defaultValue="Dark"
+        app:useSimpleSummaryProvider="true"
+        app:entries="@array/theme_names"
+        app:entryValues="@array/theme_values"
+        app:widgetLayout="@layout/preference_list_custom"/>
+
+    <PreferenceCategory
+        app:title="Information" />
+
+    <Preference
+        app:key="info_block"
+        app:summary="@string/AppInformation"
+        
+        app:selectable="false" />
+</androidx.preference.PreferenceScreen>

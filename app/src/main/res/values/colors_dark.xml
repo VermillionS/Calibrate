@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md3_dark_primary">#7DD3FC</color>
+    <color name="md3_dark_onPrimary">#00202A</color>
+    <color name="md3_dark_primaryContainer">#0E2A34</color>
+    <color name="md3_dark_onPrimaryContainer">#BDE9FF</color>
+
+    <color name="md3_dark_secondary">#B9A7FF</color>
+    <color name="md3_dark_onSecondary">#231B3A</color>
+    <color name="md3_dark_secondaryContainer">#2E254C</color>
+    <color name="md3_dark_onSecondaryContainer">#E6DEFF</color>
+
+    <color name="md3_dark_tertiary">#FFB59C</color>
+    <color name="md3_dark_onTertiary">#3B1A12</color>
+    <color name="md3_dark_tertiaryContainer">#53271E</color>
+    <color name="md3_dark_onTertiaryContainer">#FFDAD1</color>
+
+    <color name="md3_dark_background">#0D1117</color>
+    <color name="md3_dark_onBackground">#D6D8DD</color>
+    <color name="md3_dark_surface">#0F141B</color>
+    <color name="md3_dark_onSurface">#C6C8CD</color>
+    <color name="md3_dark_surfaceVariant">#313843</color>
+    <color name="md3_dark_onSurfaceVariant">#C1C7D0</color>
+    <color name="md3_dark_outline">#8A919C</color>
+    <color name="md3_dark_outlineVariant">#3E4651</color>
+
+    <color name="md3_dark_inverseSurface">#E6E9EE</color>
+    <color name="md3_dark_inverseOnSurface">#14181F</color>
+    <color name="md3_dark_inversePrimary">#006684</color>
+
+    <color name="md3_dark_error">#d9950d</color>
+    <color name="md3_dark_onError">#690005</color>
+    <color name="md3_dark_errorContainer">#93000A</color>
+    <color name="md3_dark_onErrorContainer">#FFDAD6</color>
+
+    <color name="md3_dark_surfaceTint">@color/md3_dark_primary</color>
+</resources>

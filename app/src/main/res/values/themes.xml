@@ -1,0 +1,90 @@
+<resources>
+    <style name="Theme.Calibrate" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/md3_dark_error</item>
+        <item name="colorOnPrimary">@color/md3_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md3_dark_error</item>
+        <item name="colorOnPrimaryContainer">@color/dark_background</item>
+
+        <item name="colorSecondary">@color/white</item>
+        <item name="colorOnSecondary">@color/md3_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md3_dark_onSurfaceVariant</item>
+        <item name="colorOnSecondaryContainer">@color/md3_dark_onSecondaryContainer</item>
+
+        <item name="colorTertiary">@color/md3_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md3_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md3_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md3_dark_onTertiaryContainer</item>
+
+        <item name="colorOnBackground">@color/md3_dark_onBackground</item>
+
+        <item name="colorSurface">@color/black</item>
+        <item name="colorOnSurface">@color/dark_icon</item>
+        <item name="colorSurfaceVariant">@color/md3_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md3_dark_onSurfaceVariant</item>
+
+        <item name="colorError">@color/md3_dark_error</item>
+        <item name="colorOnError">@color/md3_dark_onError</item>
+        <item name="colorErrorContainer">@color/md3_dark_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md3_dark_onErrorContainer</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.Custom</item>
+    </style>
+
+    <style name="Theme.Calibrate.Light" parent="Theme.Calibrate">
+        <item name="colorOnPrimaryContainer">@color/off_white</item>
+    </style>
+
+
+    <style name="Theme.Calibrate.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/md3_dark_error</item>
+        <item name="colorOnPrimary">@color/md3_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md3_dark_error</item>
+        <item name="colorOnPrimaryContainer">@color/dark_background</item>
+
+        <item name="colorSecondary">@color/white</item>
+        <item name="colorOnSecondary">@color/md3_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md3_dark_onSurfaceVariant</item>
+        <item name="colorOnSecondaryContainer">@color/md3_dark_onSecondaryContainer</item>
+
+        <item name="colorTertiary">@color/md3_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md3_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md3_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md3_dark_onTertiaryContainer</item>
+
+        <item name="colorOnBackground">@color/md3_dark_onBackground</item>
+
+        <item name="colorSurface">@color/dark_background</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorSurfaceVariant">@color/md3_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/text_color_transparent_2</item>
+        <item name="colorSurfaceContainer">@color/dark_background</item>
+
+        <item name="colorError">@color/md3_dark_error</item>
+        <item name="colorOnError">@color/md3_dark_onError</item>
+        <item name="colorErrorContainer">@color/md3_dark_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md3_dark_onErrorContainer</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.Custom</item>
+    </style>
+
+    <style name="AlertDialog.Calibrate" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="materialAlertDialogTitleTextStyle">@style/DialogTitleStyle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/DialogBodyStyle</item>
+    </style>
+
+    <style name="DialogTitleStyle" parent="@style/TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/md3_dark_onSurface</item>
+    </style>
+    <style name="DialogBodyStyle" parent="@style/TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/md3_dark_onSurface</item>
+    </style>
+
+    <style name="PreferenceThemeOverlay.Custom" parent="PreferenceThemeOverlay.v14.Material">
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+        <item name="android:textColorSecondary">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="ThemeOverlay.Calibrate.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+    </style>
+
+</resources>

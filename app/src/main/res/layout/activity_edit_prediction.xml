@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:padding="16dp" android:background="?attr/colorOnPrimaryContainer">
+
+    <LinearLayout
+        android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <View android:layout_width="match_parent" android:layout_height="50dp"/>
+        <TextView android:text="@string/edit_prediction" android:textStyle="bold" android:textSize="18sp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <View android:layout_width="match_parent" android:layout_height="12dp"/>
+        <TextView android:text="@string/title"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences|textMultiLine" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <TextView android:text="@string/probability_0_100" android:layout_marginTop="14dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <TextView android:text="@string/description" android:layout_marginTop="14dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minLines="4"
+                android:inputType="textMultiLine" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+
+        <TextView android:text="@string/resolution" android:layout_marginTop="14dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <RadioGroup android:id="@+id/rgResolution"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton android:id="@+id/rbUnresolved"
+                android:text="@string/unresolved"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textColor="?attr/colorSecondary"/>
+            <View android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+
+            <RadioButton android:id="@+id/rbNo"
+                android:text="@string/no"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textColor="?attr/colorSecondary"/>
+            <View android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+
+            <RadioButton android:id="@+id/rbYes"
+                android:text="@string/yes"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textColor="?attr/colorSecondary"/>
+        </RadioGroup>
+
+        <TextView android:text="@string/tag" android:layout_marginTop="14dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+
+        <LinearLayout
+            android:id="@+id/rowTag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="12dp">
+
+            <View
+                android:id="@+id/viewTagColor"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="8dp"
+                android:background="#00000000" />
+
+            <Spinner
+                android:id="@+id/spinnerTag"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:spinnerMode="dropdown" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditTag"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/edit_tag" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_marginTop="25dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="end" >
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/cancel"/>
+            <View android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/delete"/>
+            <Space android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/save"/>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
