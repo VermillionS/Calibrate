@@ -22,8 +22,8 @@
     <style name="calibrate.OutlinedButton" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:backgroundTint">@color/outlined_button_tint</item>
         <item name="android:textColor">@color/outlined_button_stroke</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingStart">6dp</item>
+        <item name="android:paddingEnd">6dp</item>
     </style>
 
     <style name="Calibrate.BottomNav" parent="Widget.Material3.BottomNavigationView">

@@ -4,7 +4,7 @@
         android:key="pref_theme"
         android:title="App theme"
         android:summary="Choose a color theme"
-        android:defaultValue="Dark"
+        android:defaultValue="system"
         app:useSimpleSummaryProvider="true"
         app:entries="@array/theme_names"
         app:entryValues="@array/theme_values"

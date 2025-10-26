@@ -670,7 +670,7 @@ public class GraphsFragment extends Fragment {
         legend.setTextColor(axisTextColor);
 
         Description d = new Description();
-        d.setText("Sharpness: how often each probability range is used");
+        d.setText("Frequency: how often each probability range is used");
         d.setTextColor(axisTextColor);
         bar.setDescription(d);
 

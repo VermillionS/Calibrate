@@ -36,7 +36,6 @@ public class SettingsFragment extends Fragment {
     private static final String KEY_THEME = "pref_theme";
     private PredictionViewModel vm;
 
-    // SAF launchers
     private final ActivityResultLauncher<String> createDocLauncher =
             registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"),
                     uri -> { if (uri != null) doExport(uri); });
@@ -60,7 +59,6 @@ public class SettingsFragment extends Fragment {
         super.onViewCreated(root, savedInstanceState);
         vm = new androidx.lifecycle.ViewModelProvider(requireActivity()).get(PredictionViewModel.class);
 
-        // THEME spinner (as you had it)
         Spinner spTheme = root.findViewById(R.id.spTheme);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 requireContext(), R.array.pref_theme_entries, R.layout.spinner_item);
@@ -77,19 +75,32 @@ public class SettingsFragment extends Fragment {
 
         final boolean[] userTouch = {false};
         spTheme.setOnTouchListener((v, e) -> { userTouch[0] = true; return false; });
+
         spTheme.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             boolean first = true;
-            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+            String lastApplied = saved;
+
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
                 if (!userTouch[0] && first) { first = false; return; }
+
                 String newValue = values[position];
+                if (newValue.equals(lastApplied)) {
+                    userTouch[0] = false;
+                    return;
+                }
+
                 prefs.edit().putString(KEY_THEME, newValue).apply();
+                lastApplied = newValue;
+
                 requireActivity().recreate();
+
                 userTouch[0] = false;
             }
+
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
         });
 
-        // --- Buttons ---
         root.findViewById(R.id.btnExport).setOnClickListener(v -> {
             new MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Export predictions?")
@@ -200,10 +211,5 @@ public class SettingsFragment extends Fragment {
     private void runOnUi(@NonNull Runnable r) {
         if (!isAdded()) return;
         new Handler(Looper.getMainLooper()).post(r);
-    }
-
-    public static String getSavedTheme(@NonNull android.content.Context ctx) {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-        return sp.getString(KEY_THEME, "system");
     }
 }

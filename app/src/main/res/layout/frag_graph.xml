@@ -33,6 +33,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/calibration"
+                    android:minWidth="0dp"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp"
+                    app:cornerRadius="9dp"
                     android:checkable="true"
                     style="@style/calibrate.OutlinedButton"/>
 
@@ -40,6 +44,10 @@
                     android:id="@+id/btnSharp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:minWidth="0dp"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp"
+                    app:cornerRadius="9dp"
                     android:text="@string/sharpness"
                     android:checkable="true"
                     style="@style/calibrate.OutlinedButton"/>
@@ -50,17 +58,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/score"
+                    android:minWidth="0dp"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp"
+                    app:cornerRadius="9dp"
                     style="@style/calibrate.OutlinedButton"/>
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <Space android:layout_width="6dp" android:layout_height="wrap_content"/>
+            <Space android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFilter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/filter"
-                android:drawablePadding="8dp"
+                android:minWidth="0dp"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                app:cornerRadius="9dp"
                 app:icon="@drawable/ic_round_filter_list_24"
                 app:iconGravity="textStart"/>
         </LinearLayout>

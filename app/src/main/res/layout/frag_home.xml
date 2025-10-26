@@ -32,7 +32,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/sort"
-                android:drawablePadding="8dp"
+                android:minWidth="0dp"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                app:cornerRadius="9dp"
                 app:icon="@drawable/ic_round_sort_24"
                 app:iconGravity="textStart"/>
 
@@ -43,7 +46,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/filter"
-                android:drawablePadding="8dp"
+                android:minWidth="0dp"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                app:cornerRadius="9dp"
                 app:icon="@drawable/ic_round_filter_list_24"
                 app:iconGravity="textStart"/>
         </LinearLayout>
@@ -64,5 +70,7 @@
         android:layout_margin="16dp"
         android:layout_gravity="end|bottom"
         android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="?attr/colorPrimary"
+        app:tint="?attr/colorSurface"
         android:contentDescription="@string/add"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

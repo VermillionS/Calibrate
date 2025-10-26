@@ -34,4 +34,34 @@
     <color name="md3_dark_onErrorContainer">#FFDAD6</color>
 
     <color name="md3_dark_surfaceTint">@color/md3_dark_primary</color>
+
+
+    <!-- Light colors -->
+    <color name="primary_light">#3D5AFE</color>
+    <color name="on_primary_light">#FFFFFF</color>
+    <color name="primary_container_light">#E3E7FF</color>
+    <color name="on_primary_container_light">#0B1B60</color>
+
+
+    <color name="secondary_light">#546E7A</color>
+    <color name="on_secondary_light">#FFFFFF</color>
+    <color name="secondary_container_light">#DCE6EB</color>
+    <color name="on_secondary_container_light">#102027</color>
+
+    <color name="tertiary_light">#2E7D32</color>
+    <color name="on_tertiary_light">#FFFFFF</color>
+    <color name="tertiary_container_light">#CFE9D0</color>
+    <color name="on_tertiary_container_light">#093112</color>
+
+    <color name="surface_light">#FAFAFA</color>
+    <color name="on_surface_light">#1A1C1E</color>
+    <color name="surface_variant_light">#ECE8F1</color>
+    <color name="on_surface_variant_light">#49454F</color>
+
+    <color name="md3_light_onBackground">#1A1C1E</color>
+
+    <color name="md3_light_error">#B3261E</color>
+    <color name="md3_light_onError">#FFFFFF</color>
+    <color name="md3_light_errorContainer">#F9DEDC</color>
+    <color name="md3_light_onErrorContainer">#410E0B</color>
 </resources>

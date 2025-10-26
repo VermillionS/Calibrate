@@ -7,7 +7,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends BaseActivity {
     @Override protected void onCreate(Bundle savedInstanceState) {
-        ThemeManager.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -22,7 +21,7 @@ public class MainActivity extends BaseActivity {
             int id = item.getItemId();
             if (id == R.id.action_home)     { switchTo(new HomeFragment());    return true; }
             if (id == R.id.action_graphs)  { switchTo(new GraphsFragment()); return true; }
-            if (id == R.id.action_settings) { switchTo(new SettingsFragment());return true; }
+            if (id == R.id.action_settings) { switchTo(new SettingsFragment()); return true; }
             return false;
         });
     }
