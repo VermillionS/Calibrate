@@ -35,7 +35,7 @@ public class HomeFragment extends Fragment {
     private Adapter adapter;
     private List<Prediction> all = Collections.emptyList();
     private final FilterState filter = new FilterState();
-    private SortMode sortMode = SortMode.DATE_DESC; // default newest first
+    private SortMode sortMode = SortMode.DATE_DESC;
     enum SortMode {
         DATE_DESC, DATE_ASC,
         PROB_DESC, PROB_ASC
@@ -125,7 +125,6 @@ public class HomeFragment extends Fragment {
         List<Prediction> out = new ArrayList<>();
         for (Prediction p : all) if (passes(p)) out.add(p);
 
-        // --- NEW: apply sort
         switch (sortMode) {
             case DATE_DESC:
                 Collections.sort(out, (a,b) -> Long.compare(b.createdAt, a.createdAt));
@@ -453,7 +452,7 @@ public class HomeFragment extends Fragment {
 
     private static String sanitizeTitle(String s) {
         if (s == null) return "";
-        s = s.replaceAll("\\p{Cntrl}", "");  // strip control chars
+        s = s.replaceAll("\\p{Cntrl}", "");
         s = s.replaceAll("\\s+", " ").trim();
         if (s.length() > 200) s = s.substring(0, 200);
         return s;
@@ -576,12 +575,17 @@ public class HomeFragment extends Fragment {
             });
             h.tvTitle.setText(p.title);
 
-            String meta = "p=" + String.format(java.util.Locale.US, "%.1f", p.probability) + "% • " +
-                    java.text.DateFormat.getDateTimeInstance().format(p.createdAt) +
-                    ((p.resolved && p.outcomeYes != null) ? (" • Resolved: " + (p.outcomeYes ? "YES" : "NO")) : "");
-            h.tvMeta.setText(meta);
+            StringBuilder meta = new StringBuilder();
+            meta.append(String.format(Locale.US, "p=%.1f%% • %s",
+                    p.probability,
+                    java.text.DateFormat.getDateTimeInstance().format(p.createdAt)));
 
-            // Tag
+            if (p.resolved && p.outcomeYes != null) {
+                meta.append("\nResolved: ").append(p.outcomeYes ? "YES" : "NO");
+            }
+
+            h.tvMeta.setText(meta.toString());
+
             if (p.tagLabel != null && !p.tagLabel.isEmpty() && p.tagColor != 0) {
                 h.tvTagLabel.setText(p.tagLabel);
                 h.tvTagLabel.setVisibility(View.VISIBLE);
@@ -593,10 +597,12 @@ public class HomeFragment extends Fragment {
             }
 
             boolean canResolve = !p.resolved;
-            h.btnYes.setEnabled(canResolve);
-            h.btnNo.setEnabled(canResolve);
-            h.btnYes.setOnClickListener(v -> { if (canResolve) vm.resolve(p.id, true); });
-            h.btnNo.setOnClickListener(v -> { if (canResolve) vm.resolve(p.id, false); });
+
+            h.btnYes.setVisibility(canResolve ? View.VISIBLE : View.GONE);
+            h.btnNo.setVisibility (canResolve ? View.VISIBLE : View.GONE);
+
+            h.btnYes.setOnClickListener(v -> {if (canResolve) vm.resolve(p.id, true);});
+            h.btnNo.setOnClickListener(v -> {if (canResolve) vm.resolve(p.id, false);});
         }
         @Override public int getItemCount() { return data == null ? 0 : data.size(); }
 

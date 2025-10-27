@@ -90,7 +90,6 @@ public class EditPredictionActivity extends BaseActivity {
     }
 
     private void refreshTagSpinner(@Nullable String preselectLabel, int preselectColor) {
-        // Build: "No tag" (color=0), then saved tags, then sentinel "New tag…"(color=-1)
         List<TagStore.Tag> saved = TagStore.getAll(this);
         tagOptions = new ArrayList<>();
         tagOptions.add(new TagOpt("No tag", 0));

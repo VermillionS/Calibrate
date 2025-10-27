@@ -19,7 +19,7 @@ public interface PredictionDao {
     long insert(Prediction p);
 
     @Query("SELECT * FROM predictions WHERE id=:id LIMIT 1")
-    Prediction getById(long id);  // sync call (use off main thread)
+    Prediction getById(long id);
 
     @Query("UPDATE predictions SET " +
             "title=:title, probability=:prob, description=:desc, " +

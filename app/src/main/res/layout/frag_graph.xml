@@ -76,7 +76,7 @@
                 android:paddingStart="9dp"
                 android:paddingEnd="9dp"
                 app:cornerRadius="9dp"
-                app:icon="@drawable/ic_round_filter_list_24"
+                app:icon="@drawable/ic_filter_24"
                 app:iconGravity="textStart"/>
         </LinearLayout>
 

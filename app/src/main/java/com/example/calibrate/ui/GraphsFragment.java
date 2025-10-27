@@ -163,7 +163,7 @@ public class GraphsFragment extends Fragment {
 
         if (filter.fromMs != null && filter.toMs != null && filter.toMs >= filter.fromMs) {
             long ms = (filter.toMs - filter.fromMs) + 1L;
-            int days = (int) Math.max(1L, Math.round(ms / 86_400_000.0)); // ceil-ish
+            int days = (int) Math.max(1L, Math.round(ms / 86_400_000.0));
             return days;
         }
 
@@ -271,7 +271,7 @@ public class GraphsFragment extends Fragment {
         l.setGridColor(axis & 0x33FFFFFF);
 
         if (descText != null && descText.toLowerCase(Locale.US).contains("rolling")) {
-            float m = Math.max(0.001f, maxY(data));     // guard
+            float m = Math.max(0.001f, maxY(data));
             float top = (m <= 1f) ? Math.max(1f, m * 1.15f) : Math.min(3f, m * 1.15f);
             l.setAxisMinimum(0f);
             l.setAxisMaximum(top);

@@ -148,7 +148,6 @@ public class SettingsFragment extends Fragment {
                     o.put("probability", p.probability);
                     o.put("createdAt", p.createdAt);
                     o.put("resolved", p.resolved);
-                    // outcomeYes may be null
                     o.put("outcomeYes", p.outcomeYes == null ? JSONObject.NULL : p.outcomeYes);
                     o.put("description", p.description == null ? JSONObject.NULL : p.description);
                     o.put("tagLabel", p.tagLabel == null ? JSONObject.NULL : p.tagLabel);
