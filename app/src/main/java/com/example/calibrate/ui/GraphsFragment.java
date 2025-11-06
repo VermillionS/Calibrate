@@ -522,14 +522,14 @@ public class GraphsFragment extends Fragment {
         ArrayList<Entry> diag = new ArrayList<>();
 
         for (int i = 0; i < bins; i++) {
-            float binMid = i * binSize + binSize / 2f;
+            float xAtBin = i * binSize;
             float observed = (count[i] == 0) ? Float.NaN : (100f * yes[i] / count[i]);
-            if (!Float.isNaN(observed)) { pts.add(new Entry(binMid, observed)); }
-            diag.add(new Entry(i * binSize, i * binSize));
+            if (!Float.isNaN(observed)) { pts.add(new Entry(xAtBin, observed)); }
+            diag.add(new Entry(xAtBin, xAtBin));
         }
 
-        int idealColor = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSecondary, Color.LTGRAY);
-        int actualColor = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimary, Color.CYAN);
+        int idealColor = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiary, Color.CYAN);
+        int actualColor = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimary, Color.RED);
 
         LineDataSet ideal = new LineDataSet(diag, "Perfect calibration");
         ideal.setDrawCircles(false);
@@ -539,7 +539,8 @@ public class GraphsFragment extends Fragment {
         LineDataSet ds = new LineDataSet(pts, "Actual calibration accuracy (%)");
         ds.setCircleRadius(4f);
         ds.setLineWidth(2.5f);
-        ideal.setColor(actualColor);
+        ds.setColor(actualColor);
+        ds.setCircleColors(actualColor);
 
         ArrayList<ILineDataSet> sets = new ArrayList<>();
         sets.add(ideal);

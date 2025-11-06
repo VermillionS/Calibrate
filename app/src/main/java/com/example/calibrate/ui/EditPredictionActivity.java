@@ -13,6 +13,7 @@ import com.example.calibrate.data.TagStore;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class EditPredictionActivity extends BaseActivity {
 
@@ -162,9 +163,9 @@ public class EditPredictionActivity extends BaseActivity {
         ll.addView(etName);
         ll.addView(etHex);
 
-        final int[] pickedColor = { PALETTE_16[0] };
+        final int[] pickedColor = { PALETTE[0] };
 
-        View grid = buildColorGrid(ll, PALETTE_16, pickedColor[0], c -> {
+        View grid = buildColorGrid(ll, PALETTE, pickedColor[0], c -> {
             pickedColor[0] = c;
             etHex.setText(String.format(java.util.Locale.US, "#%08X", c));
         });
@@ -211,7 +212,10 @@ public class EditPredictionActivity extends BaseActivity {
     private void bindPrediction(Prediction p) {
         if (p == null) { finish(); return; }
         etTitle.setText(p.title);
-        etProb.setText(String.format(java.util.Locale.US, "%.1f", p.probability));
+        String probStr = String.format(Locale.US, "%.2f", p.probability)
+                .replaceAll("0+$", "")
+                .replaceAll("\\.$", "");
+        etProb.setText(probStr);
         etDesc.setText(p.description == null ? "" : p.description);
 
         if (!p.resolved) rgResolution.check(R.id.rbUnresolved);
@@ -274,9 +278,9 @@ public class EditPredictionActivity extends BaseActivity {
         ll.setPadding(24, 16, 24, 0);
         ll.addView(etName);
 
-        final int[] pickedColor = { PALETTE_16[0] };
+        final int[] pickedColor = { PALETTE[0] };
 
-        View grid = buildColorGrid(ll, PALETTE_16, pickedColor[0], c -> {
+        View grid = buildColorGrid(ll, PALETTE, pickedColor[0], c -> {
             pickedColor[0] = c;
             etHex.setText(String.format(java.util.Locale.US, "#%08X", c));
         });
@@ -294,22 +298,28 @@ public class EditPredictionActivity extends BaseActivity {
                 .setTitle("New tag")
                 .setView(ll)
                 .setPositiveButton("OK", (d,w)->{
+
                     String name = etName.getText().toString().trim();
-                    if (name.isEmpty()) name = "Tag";
-                    int color = parseColorOr(etHex.getText().toString(), pickedColor[0]);
+                    if (!name.isEmpty()) {
+                        int color = parseColorOr(etHex.getText().toString(), pickedColor[0]);
 
-                    TagStore.addOrUpdate(this, new TagStore.Tag(name, color));
-                    vm.renameTagEverywhere(name, name, color);
+                        TagStore.addOrUpdate(this, new TagStore.Tag(name, color));
+                        vm.renameTagEverywhere(name, name, color);
 
-                    refreshTagSpinner(name, color);
+                        refreshTagSpinner(name, color);
 
-                    for (int i = 0; i < tagOptions.size(); i++) {
-                        TagOpt t = tagOptions.get(i);
-                        if (t.color != -1 && t.label.equalsIgnoreCase(name)) {
-                            lastRealIndex = i;
-                            lastRealTag   = t;
-                            break;
+                        for (int i = 0; i < tagOptions.size(); i++) {
+                            TagOpt t = tagOptions.get(i);
+                            if (t.color != -1 && t.label.equalsIgnoreCase(name)) {
+                                lastRealIndex = i;
+                                lastRealTag   = t;
+                                break;
+                            }
                         }
+                    } else {
+                        toast("Must enter a new Tag's Name");
+                        int idx = (lastRealIndex < 0) ? 0 : lastRealIndex;
+                        spTag.setSelection(idx);
                     }
                 })
                 .setNegativeButton("Cancel", (d,w)->{
@@ -442,11 +452,27 @@ public class EditPredictionActivity extends BaseActivity {
 
     private void toast(String s){ Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
 
-    private static final int[] PALETTE_16 = new int[]{
-            0xFFE53935, 0xFFD81B60, 0xFF8E24AA, 0xFF5E35B1,
-            0xFF3949AB, 0xFF1E88E5, 0xFF039BE5, 0xFF00ACC1,
-            0xFF00897B, 0xFF43A047, 0xFF7CB342, 0xFFFDD835,
-            0xFFFFB300, 0xFFFB8C00, 0xFFF4511E, 0xFF6D4C41
+    private static final int[] PALETTE = new int[]{
+            0xFFFF0000,
+            0xFFFF3A00,
+            0xFFFF7F00,
+            0xFFFFB300,
+            0xFFC8FF00,
+            0xFF80FF00,
+            0xFF40FF00,
+            0xFF00FF40,
+            0xFF00FF80,
+            0xFF00FFBF,
+            0xFF00FFFF,
+            0xFF00BFFF,
+            0xFF0080FF,
+            0xFF0040FF,
+            0xFF4000FF,
+            0xFF8000FF,
+            0xFFBF00FF,
+            0xFFFF00FF,
+            0xFFFF00BF,
+            0xFFFF0040
     };
 
     private static int dp(View anchor, int dps) {
@@ -457,7 +483,7 @@ public class EditPredictionActivity extends BaseActivity {
     private View buildColorGrid(View anchorForDp, int[] palette, int initiallySelectedColor,
                                 java.util.function.IntConsumer onPick) {
         android.widget.GridLayout grid = new android.widget.GridLayout(anchorForDp.getContext());
-        grid.setColumnCount(4);
+        grid.setColumnCount(5);
         grid.setRowCount((int) Math.ceil(palette.length / 4.0));
         grid.setPadding(0, dp(anchorForDp, 8), 0, 0);
 
@@ -515,7 +541,7 @@ public class EditPredictionActivity extends BaseActivity {
 
         final int[] pickedColor = { existing.color };
 
-        View grid = buildColorGrid(ll, PALETTE_16, existing.color, c -> {
+        View grid = buildColorGrid(ll, PALETTE, existing.color, c -> {
             pickedColor[0] = c;
             etHex.setText(String.format(java.util.Locale.US, "#%08X", c));
         });

@@ -10,7 +10,7 @@
     <color name="md3_dark_secondaryContainer">#2E254C</color>
     <color name="md3_dark_onSecondaryContainer">#E6DEFF</color>
 
-    <color name="md3_dark_tertiary">#FFB59C</color>
+    <color name="md3_dark_tertiary">#00FFFF</color>
     <color name="md3_dark_onTertiary">#3B1A12</color>
     <color name="md3_dark_tertiaryContainer">#53271E</color>
     <color name="md3_dark_onTertiaryContainer">#FFDAD1</color>
@@ -48,7 +48,7 @@
     <color name="secondary_container_light">#DCE6EB</color>
     <color name="on_secondary_container_light">#102027</color>
 
-    <color name="tertiary_light">#2E7D32</color>
+    <color name="tertiary_light">#00FFFF</color>
     <color name="on_tertiary_light">#FFFFFF</color>
     <color name="tertiary_container_light">#CFE9D0</color>
     <color name="on_tertiary_container_light">#093112</color>

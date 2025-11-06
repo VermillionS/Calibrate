@@ -302,13 +302,13 @@ public class HomeFragment extends Fragment {
         slider.setValue(startVal);
 
         slider.setLabelFormatter(value ->
-                String.format(java.util.Locale.US, "%.1f%%", value)
+                String.format(java.util.Locale.US, "%.0f%%", value)
         );
 
         slider.addOnChangeListener((s, value, fromUser) -> {
             if (fromText[0]) return;
             fromSlider[0] = true;
-            etProb.setText(String.format(java.util.Locale.US, "%.1f", value));
+            etProb.setText(String.format(java.util.Locale.US, "%.0f", value));
             etProb.setSelection(etProb.getText().length());
             fromSlider[0] = false;
         });
@@ -320,7 +320,7 @@ public class HomeFragment extends Fragment {
                 if (fromSlider[0]) return;
                 fromText[0] = true;
                 Double v = parseProb(s == null ? "" : s.toString());
-                float clamped = (float) (v == null ? slider.getValue() : clampPct(v));
+                float clamped = (v == null ? slider.getValue() : Math.round(clampPct(v)));
                 if (Math.abs(slider.getValue() - clamped) > 0.0001f) slider.setValue(clamped);
                 fromText[0] = false;
             }
@@ -358,9 +358,9 @@ public class HomeFragment extends Fragment {
                     ll.setPadding(24, 16, 24, 0);
                     ll.addView(etName);
 
-                    final int[] pickedColor = { PALETTE_16[0] };
+                    final int[] pickedColor = { PALETTE[0] };
 
-                    View paletteGrid = buildColorGrid(ll, PALETTE_16, pickedColor[0], c -> {
+                    View paletteGrid = buildColorGrid(ll, PALETTE, pickedColor[0], c -> {
                         pickedColor[0] = c;
                         etHex.setText(String.format(java.util.Locale.US, "#%08X", c));
                     });
@@ -434,7 +434,7 @@ public class HomeFragment extends Fragment {
                     if (prob == null) { toast("Enter a probability"); return; }
                     if (prob <= 0) { toast("Probability must be greater than 0%"); return; }
                     if (prob >= 100) { toast("Probability must be less than 100%"); return; }
-                    double p = clampPct(prob.doubleValue());
+                    double p = clampPct(prob);
 
                     TagOpt sel = (TagOpt) spTag.getSelectedItem();
                     String tagLabel = (sel == null || sel.color == -1 || "No tag".equals(sel.label)) ? null : sel.label;
@@ -462,18 +462,35 @@ public class HomeFragment extends Fragment {
         try { String t = s==null ? "" : s.trim(); if (t.isEmpty()) return null; return Double.parseDouble(t); }
         catch (Exception e) { return null; }
     }
-    private static double clampPct(double v) { return v < 0.0 ? 0.0 : (v > 100.0 ? 100.0 : v); }
+
+    private static double clampPct(double v){ return v<0?0:(v>100?100:v); }
     private void toast(String s){ android.widget.Toast.makeText(requireContext(), s, android.widget.Toast.LENGTH_SHORT).show(); }
     private static int parseColorOr(String hex, int fallback) {
         try { String t = hex.trim(); if (!t.startsWith("#")) t = "#"+t; return android.graphics.Color.parseColor(t); }
         catch (Exception e) { return fallback; }
     }
 
-    private static final int[] PALETTE_16 = new int[]{
-            0xFFE53935, 0xFFD81B60, 0xFF8E24AA, 0xFF5E35B1,
-            0xFF3949AB, 0xFF1E88E5, 0xFF039BE5, 0xFF00ACC1,
-            0xFF00897B, 0xFF43A047, 0xFF7CB342, 0xFFFDD835,
-            0xFFFFB300, 0xFFFB8C00, 0xFFF4511E, 0xFF6D4C41
+    private static final int[] PALETTE = new int[]{
+            0xFFFF0000,
+            0xFFFF3A00,
+            0xFFFF7F00,
+            0xFFFFB300,
+            0xFFC8FF00,
+            0xFF80FF00,
+            0xFF40FF00,
+            0xFF00FF40,
+            0xFF00FF80,
+            0xFF00FFBF,
+            0xFF00FFFF,
+            0xFF00BFFF,
+            0xFF0080FF,
+            0xFF0040FF,
+            0xFF4000FF,
+            0xFF8000FF,
+            0xFFBF00FF,
+            0xFFFF00FF,
+            0xFFFF00BF,
+            0xFFFF0040
     };
 
     private static int dp(View v, int dps) {
@@ -484,7 +501,7 @@ public class HomeFragment extends Fragment {
     private static View buildColorGrid(View anchorForDp, int[] palette, int initiallySelectedColor,
                                        java.util.function.IntConsumer onPick) {
         android.widget.GridLayout grid = new android.widget.GridLayout(anchorForDp.getContext());
-        grid.setColumnCount(4);
+        grid.setColumnCount(5);
         grid.setRowCount((int) Math.ceil(palette.length / 4.0));
         grid.setPadding(0, dp(anchorForDp, 8), 0, 0);
 
@@ -575,9 +592,13 @@ public class HomeFragment extends Fragment {
             });
             h.tvTitle.setText(p.title);
 
+            String probStr = String.format(Locale.US, "%.2f", p.probability)
+                    .replaceAll("0+$", "")
+                    .replaceAll("\\.$", "");
+
             StringBuilder meta = new StringBuilder();
-            meta.append(String.format(Locale.US, "p=%.1f%% • %s",
-                    p.probability,
+            meta.append(String.format(Locale.US, "p=%s%% • %s",
+                    probStr,
                     java.text.DateFormat.getDateTimeInstance().format(p.createdAt)));
 
             if (p.resolved && p.outcomeYes != null) {
