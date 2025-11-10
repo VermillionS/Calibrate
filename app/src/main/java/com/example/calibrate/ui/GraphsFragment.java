@@ -1,6 +1,8 @@
 package com.example.calibrate.ui;
 
 import android.app.DatePickerDialog;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,6 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
+
 import com.example.calibrate.R;
 import com.example.calibrate.data.Prediction;
 import com.example.calibrate.data.TagStore;
@@ -32,6 +36,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -59,8 +64,11 @@ public class GraphsFragment extends Fragment {
         Status status = Status.ANY;
         int binSize = 10;
     }
-    enum ScoreWindowMode { D7, D30, D60, DATE_RANGE }
-    private ScoreWindowMode scoreMode = ScoreWindowMode.D30;
+
+    private static final String PREF_FILTER = "graph_filter";
+
+    enum ScoreType { BRIER, LOG }
+    private ScoreType scoreType = ScoreType.BRIER;
 
     @Override public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(root, savedInstanceState);
@@ -71,6 +79,9 @@ public class GraphsFragment extends Fragment {
         toggle = root.findViewById(R.id.toggleGroup);
 
         vm = new ViewModelProvider(requireActivity()).get(PredictionViewModel.class);
+
+        loadFilter();
+        updateFilterIcon();
 
         vm.predictions().observe(getViewLifecycleOwner(), list -> {
             all = (list == null) ? java.util.Collections.emptyList() : list;
@@ -119,13 +130,9 @@ public class GraphsFragment extends Fragment {
             styleSharpnessChart(sharpnessChart, bdata);
             showBar();
         } else if (showScore) {
-            int windowDays = computeScoreWindowDaysFromFilter();
-            LineData sdata = buildScoreSeries(subset, windowDays);
+            LineData sdata = buildScoreSeries(subset);
             if (isEmpty(sdata)) { showEmpty(); return; }
-            String desc = (scoreMode == ScoreWindowMode.DATE_RANGE)
-                    ? "Rolling scores (date-range window)"
-                    : "Rolling " + windowDays + "-day Brier / LogLoss";
-            styleGenericLineChart(chart, sdata, desc);
+            styleGenericLineChart(chart, sdata, "Rolling average and Individual Brier / LogLoss");
             adjustScoreViewport(chart, sdata);
             showChart();
         }
@@ -156,67 +163,59 @@ public class GraphsFragment extends Fragment {
         return true;
     }
 
-    private int computeScoreWindowDaysFromFilter() {
-        if (scoreMode == ScoreWindowMode.D7)  return 7;
-        if (scoreMode == ScoreWindowMode.D30) return 30;
-        if (scoreMode == ScoreWindowMode.D60) return 60;
-
-        if (filter.fromMs != null && filter.toMs != null && filter.toMs >= filter.fromMs) {
-            long ms = (filter.toMs - filter.fromMs) + 1L;
-            int days = (int) Math.max(1L, Math.round(ms / 86_400_000.0));
-            return days;
-        }
-
-        return 30;
-    }
-
-    private LineData buildScoreSeries(List<Prediction> list, int windowDays) {
+    private LineData buildScoreSeries(List<Prediction> list) {
         List<Prediction> resolved = new ArrayList<>();
-        for (Prediction p : list) if (p.resolved && p.outcomeYes != null) resolved.add(p);
+        for (Prediction p : list)
+            if (p.resolved && p.outcomeYes != null)
+                resolved.add(p);
+
         if (resolved.isEmpty()) return new LineData();
 
         resolved.sort(java.util.Comparator.comparingLong(p -> p.createdAt));
-        long windowMs = windowDays * 24L * 3600L * 1000L;
 
-        ArrayList<Entry> brier = new ArrayList<>();
-        ArrayList<Entry> logls = new ArrayList<>();
+        ArrayList<Entry> rolling = new ArrayList<>();
+        ArrayList<Entry> instant = new ArrayList<>();
 
+        double sum = 0;
         for (int i = 0; i < resolved.size(); i++) {
-            long tEnd = resolved.get(i).createdAt;
-            long tStart = tEnd - windowMs;
+            Prediction pi = resolved.get(i);
+            double prob = Math.max(0.000001, Math.min(0.999999, pi.probability / 100.0));
+            double y = pi.outcomeYes ? 1.0 : 0.0;
 
-            double bSum = 0, lSum = 0; int n = 0;
-            for (int j = 0; j <= i; j++) {
-                Prediction p = resolved.get(j);
-                if (p.createdAt >= tStart && p.createdAt <= tEnd) {
-                    double prob = Math.max(0.000001, Math.min(0.999999, p.probability / 100.0));
-                    double y = p.outcomeYes ? 1.0 : 0.0;
-                    bSum += Math.pow(prob - y, 2);
-                    lSum += -(y * Math.log(prob) + (1 - y) * Math.log(1 - prob));
-                    n++;
-                }
-            }
-            if (n > 0) {
-                brier.add(new Entry(i, (float)(bSum / n)));
-                logls.add(new Entry(i, (float)(lSum / n)));
-            }
+            double value = (scoreType == ScoreType.LOG)
+                    ? -(y * Math.log(prob) + (1 - y) * Math.log(1 - prob))
+                    : Math.pow(prob - y, 2);
+
+            instant.add(new Entry(i, (float) value, pi));
+
+            sum += value;
+            double avg = sum / (i + 1);
+            rolling.add(new Entry(i, (float) avg));
         }
 
-        int c1 = Color.CYAN;
-        int c2 = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimary, Color.LTGRAY);
-        LineDataSet dsB = new LineDataSet(brier, "Brier score");
-        dsB.setLineWidth(2.5f);
-        dsB.setCircleRadius(3f);
-        dsB.setColor(c1);
-        dsB.setCircleColors(c1);
+        int cInst = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiary, Color.CYAN);
+        int cRoll = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimary, Color.MAGENTA);
 
-        LineDataSet dsL = new LineDataSet(logls, "Log loss");
-        dsL.setLineWidth(2.5f);
-        dsL.setCircleRadius(3f);
-        dsL.setColor(c2);
-        dsL.setCircleColors(c2);
+        String labelRoll = (scoreType == ScoreType.LOG)
+                ? "Log loss (rolling average)"
+                : "Brier Score (rolling average)";
+        String labelInst = (scoreType == ScoreType.LOG)
+                ? "Log loss (individual)"
+                : "Brier Score (individual)";
 
-        return new LineData(dsB, dsL);
+        LineDataSet dsInst = new LineDataSet(instant, labelInst);
+        dsInst.setLineWidth(2f);
+        dsInst.setCircleRadius(3f);
+        dsInst.setColor(cInst);
+        dsInst.setCircleColors(cInst);
+
+        LineDataSet dsRoll = new LineDataSet(rolling, labelRoll);
+        dsRoll.setLineWidth(2.5f);
+        dsRoll.setCircleRadius(3f);
+        dsRoll.setColor(cRoll);
+        dsRoll.setCircleColors(cRoll);
+
+        return new LineData(dsRoll, dsInst);
     }
 
     private void adjustScoreViewport(LineChart chart, LineData data) {
@@ -270,10 +269,10 @@ public class GraphsFragment extends Fragment {
         x.setGridColor(axis & 0x33FFFFFF);
         l.setGridColor(axis & 0x33FFFFFF);
 
-        if (descText != null && descText.toLowerCase(Locale.US).contains("rolling")) {
+        if (descText != null) {
             float m = Math.max(0.001f, maxY(data));
-            float top = (m <= 1f) ? Math.max(1f, m * 1.15f) : Math.min(3f, m * 1.15f);
-            l.setAxisMinimum(0f);
+            float top = (m <= 1f) ? Math.max(1f, m * 1.15f) : Math.min(10f, m * 1.15f);
+            l.setAxisMinimum(-0.1f);
             l.setAxisMaximum(top);
             l.setGranularityEnabled(true);
             l.setGranularity(top <= 1f ? 0.1f : 0.2f);
@@ -283,6 +282,42 @@ public class GraphsFragment extends Fragment {
         data.setValueTextSize(11f);
         lc.setExtraTopOffset(12f);
         lc.invalidate();
+
+        chart.setHighlightPerTapEnabled(true);
+        chart.setOnChartValueSelectedListener(new com.github.mikephil.charting.listener.OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, com.github.mikephil.charting.highlight.Highlight h) {
+                Object tag = e.getData();
+                if (tag instanceof Prediction) {
+                    Prediction p = (Prediction) tag;
+
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(String.format(
+                            java.util.Locale.US,
+                            "p=%.2f%%\n%s\nResolved: %s",
+                            p.probability,
+                            java.text.DateFormat.getDateTimeInstance().format(p.createdAt),
+                            p.resolved ? (p.outcomeYes != null && p.outcomeYes ? "Yes" : "No") : "Unresolved"
+                    ));
+
+                    if (p.tagLabel != null && !p.tagLabel.trim().isEmpty()
+                            && !"No tag".equalsIgnoreCase(p.tagLabel.trim())) {
+                        msg.append("\nTag: ").append(p.tagLabel);
+                    }
+                    if (p.description != null && !p.description.trim().isEmpty()) {
+                        msg.append("\n\n").append(p.description.trim());
+                    }
+
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                            .setTitle(p.title)
+                            .setMessage(msg.toString())
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+            }
+            @Override public void onNothingSelected() {}
+        });
+        chart.setMaxHighlightDistance(20f);
     }
 
     private boolean passes(Prediction p) {
@@ -364,34 +399,6 @@ public class GraphsFragment extends Fragment {
             rootCol = (android.view.ViewGroup) view;
         }
 
-        TextView tvWin = new TextView(requireContext());
-        tvWin.setText("Score window");
-        tvWin.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        android.widget.LinearLayout.LayoutParams tvLp =
-                new android.widget.LinearLayout.LayoutParams(
-                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-        tvLp.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
-        tvWin.setLayoutParams(tvLp);
-        rootCol.addView(tvWin);
-
-        Spinner spWin = new Spinner(requireContext());
-        String[] winOpts = new String[]{"7 days", "30 days", "60 days", "Use date range"};
-        ArrayAdapter<String> winAdapter =
-                new ArrayAdapter<>(requireContext(), R.layout.spinner_item, winOpts);
-        winAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        spWin.setAdapter(winAdapter);
-
-        int sel = 1;
-        switch (scoreMode) {
-            case D7: sel = 0; break;
-            case D30: sel = 1; break;
-            case D60: sel = 2; break;
-            case DATE_RANGE: sel = 3; break;
-        }
-        spWin.setSelection(sel);
-        rootCol.addView(spWin);
-
         TextView tvBin = new TextView(requireContext());
         tvBin.setText("Bin size");
         tvBin.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
@@ -420,8 +427,27 @@ public class GraphsFragment extends Fragment {
             default: selBin = 3;
         }
         spBin.setSelection(selBin);
-
         rootCol.addView(spBin);
+
+        TextView tvType = new TextView(requireContext());
+        tvType.setText("Score type");
+        tvType.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        android.widget.LinearLayout.LayoutParams tvTypeLp =
+                new android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        tvTypeLp.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        tvType.setLayoutParams(tvTypeLp);
+        rootCol.addView(tvType);
+
+        Spinner spType = new Spinner(requireContext());
+        String[] typeOpts = new String[]{"Brier", "Log loss"};
+        ArrayAdapter<String> typeAdapter =
+                new ArrayAdapter<>(requireContext(), R.layout.spinner_item, typeOpts);
+        typeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        spType.setAdapter(typeAdapter);
+        spType.setSelection(scoreType == ScoreType.LOG ? 1 : 0);
+        rootCol.addView(spType);
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Filter (graph)")
@@ -433,6 +459,7 @@ public class GraphsFragment extends Fragment {
                     filter.pMax   = parseDouble(etMax.getText());
                     String selTag = (String) spTag.getSelectedItem();
                     filter.tag = "Any".equals(selTag) ? null : selTag;
+                    scoreType = (spType.getSelectedItemPosition() == 1) ? ScoreType.LOG : ScoreType.BRIER;
 
                     int pos = spStatus.getSelectedItemPosition();
                     switch (pos) {
@@ -441,13 +468,6 @@ public class GraphsFragment extends Fragment {
                         case 3: filter.status = Status.RESOLVED_YES; break;
                         case 4: filter.status = Status.RESOLVED_NO;  break;
                         default: filter.status = Status.ANY;
-                    }
-                    int winPos = spWin.getSelectedItemPosition();
-                    switch (winPos) {
-                        case 0: scoreMode = ScoreWindowMode.D7; break;
-                        case 1: scoreMode = ScoreWindowMode.D30; break;
-                        case 2: scoreMode = ScoreWindowMode.D60; break;
-                        case 3: scoreMode = ScoreWindowMode.DATE_RANGE; break;
                     }
 
                     int binPos = spBin.getSelectedItemPosition();
@@ -463,6 +483,8 @@ public class GraphsFragment extends Fragment {
                     chart.clear();
                     sharpnessChart.clear();
                     renderFiltered();
+                    saveFilter();
+                    updateFilterIcon();
                 })
                 .setNeutralButton("Clear", (d,w)->{
                     filter.fromMs=filter.toMs=null;
@@ -473,6 +495,8 @@ public class GraphsFragment extends Fragment {
                     chart.clear();
                     sharpnessChart.clear();
                     renderFiltered();
+                    saveFilter();
+                    updateFilterIcon();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -671,7 +695,7 @@ public class GraphsFragment extends Fragment {
         legend.setTextColor(axisTextColor);
 
         Description d = new Description();
-        d.setText("Frequency: how often each probability range is used");
+        d.setText("Number of predictions in each bin and percentage of total predictions");
         d.setTextColor(axisTextColor);
         bar.setDescription(d);
 
@@ -701,5 +725,66 @@ public class GraphsFragment extends Fragment {
             }
         }
         return m;
+    }
+
+    private void saveFilter() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        sp.edit()
+                .putString(PREF_FILTER + "_tag", filter.tag)
+                .putString(PREF_FILTER + "_status", filter.status.name())
+                .putString(PREF_FILTER + "_pMin", filter.pMin == null ? "" : filter.pMin.toString())
+                .putString(PREF_FILTER + "_pMax", filter.pMax == null ? "" : filter.pMax.toString())
+                .putLong(PREF_FILTER + "_from", filter.fromMs == null ? -1 : filter.fromMs)
+                .putLong(PREF_FILTER + "_to", filter.toMs == null ? -1 : filter.toMs)
+                .putInt(PREF_FILTER + "_binSize", filter.binSize)
+                .putString(PREF_FILTER + "_scoreType", scoreType.name())
+                .apply();
+    }
+
+    private void loadFilter() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        filter.tag = sp.getString(PREF_FILTER + "_tag", null);
+        try { filter.status = Status.valueOf(sp.getString(PREF_FILTER + "_status", Status.ANY.name())); }
+        catch (Exception e) { filter.status = Status.ANY; }
+
+        String pMin = sp.getString(PREF_FILTER + "_pMin", "");
+        String pMax = sp.getString(PREF_FILTER + "_pMax", "");
+        filter.pMin = pMin.isEmpty() ? null : Double.parseDouble(pMin);
+        filter.pMax = pMax.isEmpty() ? null : Double.parseDouble(pMax);
+
+        long from = sp.getLong(PREF_FILTER + "_from", -1);
+        long to = sp.getLong(PREF_FILTER + "_to", -1);
+        filter.fromMs = (from == -1 ? null : from);
+        filter.toMs = (to == -1 ? null : to);
+
+        filter.binSize = sp.getInt(PREF_FILTER + "_binSize", 10);
+        try {
+            scoreType = ScoreType.valueOf(sp.getString(PREF_FILTER + "_scoreType", ScoreType.BRIER.name()));
+        } catch (Exception e)
+        { scoreType = ScoreType.BRIER; }
+    }
+
+    private void updateFilterIcon() {
+        View btnFilter = getView().findViewById(R.id.btnFilter);
+        if (!(btnFilter instanceof com.google.android.material.button.MaterialButton)) return;
+        MaterialButton mb = (MaterialButton) btnFilter;
+
+        boolean active = (filter.tag != null || filter.fromMs != null || filter.toMs != null
+                || filter.pMin != null || filter.pMax != null || filter.status != Status.ANY
+                || filter.binSize != 10 || scoreType != ScoreType.BRIER);
+
+        int colorAttr = active
+                ? com.google.android.material.R.attr.colorOnSurface
+                : com.google.android.material.R.attr.colorSurface;
+
+        int tint = MaterialColors.getColor(requireContext(), colorAttr, 0xFFFFFFFF);
+        mb.setIconTint(ColorStateList.valueOf(tint));
+    }
+
+    @Override public void onResume() {
+        super.onResume();
+        loadFilter();
+        updateFilterIcon();
+        renderFiltered();
     }
 }

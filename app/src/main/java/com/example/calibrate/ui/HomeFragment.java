@@ -27,6 +27,11 @@ import com.example.calibrate.vm.PredictionViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
 import java.util.List;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import androidx.preference.PreferenceManager;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.button.MaterialButton;
 import java.time.*;
 import java.util.*;
 
@@ -51,10 +56,15 @@ public class HomeFragment extends Fragment {
     }
     enum Status { ANY, RESOLVED, UNRESOLVED, RESOLVED_YES, RESOLVED_NO }
 
+    private static final String PREF_HOME_FILTER = "home_filter";
+
     @Override public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(root, savedInstanceState);
 
         vm = new ViewModelProvider(requireActivity()).get(PredictionViewModel.class);
+
+        loadFilter();
+        updateFilterIcon();
 
         RecyclerView rv = root.findViewById(R.id.recycler);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -145,6 +155,8 @@ public class HomeFragment extends Fragment {
 
     @Override public void onResume() {
         super.onResume();
+        loadFilter();
+        updateFilterIcon();
         applyFilter();
     }
 
@@ -238,6 +250,8 @@ public class HomeFragment extends Fragment {
                         default: filter.status = Status.ANY;
                     }
                     applyFilter();
+                    saveFilter();
+                    updateFilterIcon();
                 })
                 .setNeutralButton("Clear", (d,w)->{
                     filter.fromMs=filter.toMs=null;
@@ -245,6 +259,8 @@ public class HomeFragment extends Fragment {
                     filter.tag=null;
                     filter.status=Status.ANY;
                     applyFilter();
+                    saveFilter();
+                    updateFilterIcon();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -547,6 +563,51 @@ public class HomeFragment extends Fragment {
             grid.addView(swatch);
         }
         return grid;
+    }
+
+    private void saveFilter() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        sp.edit()
+                .putString(PREF_HOME_FILTER + "_tag", filter.tag)
+                .putString(PREF_HOME_FILTER + "_status", filter.status.name())
+                .putString(PREF_HOME_FILTER + "_pMin", filter.pMin == null ? "" : filter.pMin.toString())
+                .putString(PREF_HOME_FILTER + "_pMax", filter.pMax == null ? "" : filter.pMax.toString())
+                .putLong(PREF_HOME_FILTER + "_from", filter.fromMs == null ? -1 : filter.fromMs)
+                .putLong(PREF_HOME_FILTER + "_to",   filter.toMs   == null ? -1 : filter.toMs)
+                .apply();
+    }
+
+    private void loadFilter() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        filter.tag = sp.getString(PREF_HOME_FILTER + "_tag", null);
+        try {
+            filter.status = Status.valueOf(sp.getString(PREF_HOME_FILTER + "_status", Status.ANY.name()));
+        } catch (Exception e) { filter.status = Status.ANY; }
+
+        String pMin = sp.getString(PREF_HOME_FILTER + "_pMin", "");
+        String pMax = sp.getString(PREF_HOME_FILTER + "_pMax", "");
+        filter.pMin = pMin.isEmpty() ? null : Double.parseDouble(pMin);
+        filter.pMax = pMax.isEmpty() ? null : Double.parseDouble(pMax);
+
+        long from = sp.getLong(PREF_HOME_FILTER + "_from", -1);
+        long to   = sp.getLong(PREF_HOME_FILTER + "_to",   -1);
+        filter.fromMs = (from == -1 ? null : from);
+        filter.toMs   = (to   == -1 ? null : to);
+    }
+
+    private void updateFilterIcon() {
+        View btnFilter = getView().findViewById(R.id.btnFilter);
+        if (!(btnFilter instanceof com.google.android.material.button.MaterialButton)) return;
+        MaterialButton mb = (MaterialButton) btnFilter;
+
+        boolean active = (filter.tag != null || filter.fromMs != null || filter.toMs != null
+                || filter.pMin != null || filter.pMax != null || filter.status != Status.ANY);
+
+        int colorAttr = active
+                ? com.google.android.material.R.attr.colorOnSurface
+                : com.google.android.material.R.attr.colorSurface;
+        int tint = MaterialColors.getColor(requireContext(), colorAttr, 0xFFFFFFFF);
+        mb.setIconTint(ColorStateList.valueOf(tint));
     }
 
     static class Adapter extends RecyclerView.Adapter<Adapter.VH> {
