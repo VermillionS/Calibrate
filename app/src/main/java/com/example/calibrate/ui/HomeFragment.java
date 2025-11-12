@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.calibrate.data.Prediction;
 import com.example.calibrate.data.TagStore;
 import com.example.calibrate.vm.PredictionViewModel;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
 import java.util.List;
@@ -50,13 +52,14 @@ public class HomeFragment extends Fragment {
 
     static class FilterState {
         @Nullable Long fromMs, toMs;
-        @Nullable String tag;
         @Nullable Double pMin, pMax;
         Status status = Status.ANY;
+        @Nullable String tag;
     }
     enum Status { ANY, RESOLVED, UNRESOLVED, RESOLVED_YES, RESOLVED_NO }
 
     private static final String PREF_HOME_FILTER = "home_filter";
+    private static final String PREF_FILTER_HOME = "home_filter";
 
     @Override public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(root, savedInstanceState);
@@ -162,98 +165,129 @@ public class HomeFragment extends Fragment {
 
     private boolean passes(Prediction p) {
         if (filter.fromMs != null && p.createdAt < filter.fromMs) return false;
-        if (filter.toMs != null && p.createdAt > filter.toMs) return false;
-        if (filter.tag != null) {
-            if (p.tagLabel == null || !p.tagLabel.equalsIgnoreCase(filter.tag)) return false;
+        if (filter.toMs   != null && p.createdAt > filter.toMs)   return false;
+
+        if (filter.tag != null && !filter.tag.trim().isEmpty()) {
+            String pt = (p.tagLabel == null) ? "" : p.tagLabel;
+            boolean match = false;
+            for (String want : filter.tag.split("\\|\\|\\|\\|")) {
+                if (want.trim().equalsIgnoreCase(pt)) { match = true; break; }
+            }
+            if (!match) return false;
         }
+
         if (filter.pMin != null && p.probability < filter.pMin) return false;
         if (filter.pMax != null && p.probability > filter.pMax) return false;
-        if (filter.status == Status.RESOLVED && !p.resolved) return false;
-        if (filter.status == Status.UNRESOLVED && p.resolved) return false;
-        if (filter.status == Status.RESOLVED_YES && (!p.resolved || p.outcomeYes == null || !p.outcomeYes))
-            return false;
-        if (filter.status == Status.RESOLVED_NO && (!p.resolved || p.outcomeYes == null || p.outcomeYes))
-            return false;
-        return true;
+
+        switch (filter.status) {
+            case RESOLVED:     return p.resolved;
+            case UNRESOLVED:   return !p.resolved;
+            case RESOLVED_YES: return p.resolved && p.outcomeYes != null && p.outcomeYes;
+            case RESOLVED_NO:  return p.resolved && p.outcomeYes != null && !p.outcomeYes;
+            default:           return true;
+        }
     }
 
     private void showFilterDialog() {
-        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_filter_predictions, null, false);
+        View view = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_filter_predictions, null, false);
 
         EditText etFrom = view.findViewById(R.id.etFromDate);
         EditText etTo   = view.findViewById(R.id.etToDate);
         EditText etMin  = view.findViewById(R.id.etProbMin);
         EditText etMax  = view.findViewById(R.id.etProbMax);
-        Spinner spTag   = view.findViewById(R.id.spTag);
-        Spinner spStatus= view.findViewById(R.id.spStatus);
+        Spinner  spStatus = view.findViewById(R.id.spStatus);
+        ChipGroup chipGroup = view.findViewById(R.id.chipGroupTags);
 
         if (filter.fromMs != null)
             etFrom.setText(java.time.LocalDate.ofInstant(
                     java.time.Instant.ofEpochMilli(filter.fromMs),
-                    java.time.ZoneId.systemDefault()
-            ).toString());
-
+                    java.time.ZoneId.systemDefault()).toString());
         if (filter.toMs != null)
             etTo.setText(java.time.LocalDate.ofInstant(
                     java.time.Instant.ofEpochMilli(filter.toMs),
-                    java.time.ZoneId.systemDefault()
-            ).toString());
-
+                    java.time.ZoneId.systemDefault()).toString());
         if (filter.pMin != null) etMin.setText(String.valueOf(filter.pMin));
         if (filter.pMax != null) etMax.setText(String.valueOf(filter.pMax));
 
         etFrom.setOnClickListener(v -> pickDate(etFrom));
         etTo.setOnClickListener(v -> pickDate(etTo));
 
-        List<TagStore.Tag> saved = TagStore.getAll(requireContext());
-        List<String> tags = new ArrayList<>();
-        tags.add("Any");
-        for (TagStore.Tag t : saved) tags.add(t.label);
-        ArrayAdapter<String> tagAdapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item, tags);
-        tagAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        spTag.setAdapter(tagAdapter);
-
-        if (filter.tag != null) {
-            int idx = tags.indexOf(filter.tag);
-            if (idx >= 0) spTag.setSelection(idx);
-        }
-
         List<String> statuses = Arrays.asList("Any","Resolved","Unresolved","Resolved (Yes)","Resolved (No)");
-        ArrayAdapter<String> stAdapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item, statuses);
+        ArrayAdapter<String> stAdapter =
+                new ArrayAdapter<>(requireContext(), R.layout.spinner_item, statuses);
         stAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spStatus.setAdapter(stAdapter);
-
         switch (filter.status) {
-            case RESOLVED: spStatus.setSelection(1); break;
-            case UNRESOLVED: spStatus.setSelection(2); break;
+            case RESOLVED:     spStatus.setSelection(1); break;
+            case UNRESOLVED:   spStatus.setSelection(2); break;
             case RESOLVED_YES: spStatus.setSelection(3); break;
-            case RESOLVED_NO: spStatus.setSelection(4); break;
-            default: spStatus.setSelection(0);
+            case RESOLVED_NO:  spStatus.setSelection(4); break;
+            default:           spStatus.setSelection(0);
         }
+
+        chipGroup.setSingleSelection(false);
+        chipGroup.setSelectionRequired(false);
+
+        Set<String> selected = new HashSet<>();
+        if (filter.tag != null && !filter.tag.trim().isEmpty()) {
+            for (String s : filter.tag.split("\\|\\|\\|\\|")) {
+                if (!s.trim().isEmpty()) selected.add(s.trim());
+            }
+        }
+
+        List<TagStore.Tag> allTags = TagStore.getAll(requireContext());
+        for (TagStore.Tag t : allTags) {
+            Chip chip = new Chip(requireContext());
+            chip.setText(t.label);
+
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setChecked(selected.contains(t.label));
+            chip.setEnsureMinTouchTargetSize(true);
+            chip.setCheckedIconVisible(true);
+
+            chip.setChipBackgroundColor(chipBgColors(requireContext()));
+            chip.setTextColor(MaterialColors.getColor(
+                    requireContext(),
+                    com.google.android.material.R.attr.colorOnSurface,
+                    0xFF000000));
+
+            chip.setOnCheckedChangeListener((button, isChecked) -> {});
+            chipGroup.addView(chip);
+        }
+
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Filter predictions")
                 .setView(view)
-                .setPositiveButton("Apply", (d,w)->{
+                .setPositiveButton("Apply", (d, w) -> {
                     filter.fromMs = parseDateMs(etFrom.getText());
                     filter.toMs   = parseDateEndMs(etTo.getText());
                     filter.pMin   = parseDouble(etMin.getText());
                     filter.pMax   = parseDouble(etMax.getText());
-                    String selTag = (String) spTag.getSelectedItem();
-                    filter.tag = "Any".equals(selTag) ? null : selTag;
+
+                    List<String> sel = new ArrayList<>();
+                    for (int i = 0; i < chipGroup.getChildCount(); i++) {
+                        Chip c = (Chip) chipGroup.getChildAt(i);
+                        if (c.isChecked()) sel.add(c.getText().toString());
+                    }
+                    filter.tag = sel.isEmpty() ? null : String.join("||||", sel);
+
                     int pos = spStatus.getSelectedItemPosition();
                     switch (pos) {
-                        case 1: filter.status = Status.RESOLVED; break;
-                        case 2: filter.status = Status.UNRESOLVED; break;
+                        case 1: filter.status = Status.RESOLVED;     break;
+                        case 2: filter.status = Status.UNRESOLVED;   break;
                         case 3: filter.status = Status.RESOLVED_YES; break;
-                        case 4: filter.status = Status.RESOLVED_NO; break;
+                        case 4: filter.status = Status.RESOLVED_NO;  break;
                         default: filter.status = Status.ANY;
                     }
+
                     applyFilter();
                     saveFilter();
                     updateFilterIcon();
                 })
-                .setNeutralButton("Clear", (d,w)->{
+                .setNeutralButton("Clear", (d, w) -> {
                     filter.fromMs=filter.toMs=null;
                     filter.pMin=filter.pMax=null;
                     filter.tag=null;
@@ -264,6 +298,20 @@ public class HomeFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private static android.content.res.ColorStateList chipBgColors(@NonNull android.content.Context ctx) {
+        int checked = com.google.android.material.color.MaterialColors.getColor(
+                ctx, com.google.android.material.R.attr.colorSecondaryContainer, 0xFFE0E0E0);
+        int unchecked = com.google.android.material.color.MaterialColors.getColor(
+                ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFF2F2F2);
+
+        return new android.content.res.ColorStateList(
+                new int[][]{
+                        new int[]{android.R.attr.state_checked},
+                        new int[]{}},
+                new int[]{checked, unchecked}
+        );
     }
 
     private void pickDate(EditText target){
@@ -367,7 +415,7 @@ public class HomeFragment extends Fragment {
                     final EditText etName = new EditText(requireContext());
                     etName.setHint("Tag name");
                     final EditText etHex  = new EditText(requireContext());
-                    etHex.setHint("#RRGGBB or #AARRGGBB");
+                    etHex.setHint("Hex code, eg #AARRGGBB");
 
                     LinearLayout ll = new LinearLayout(requireContext());
                     ll.setOrientation(LinearLayout.VERTICAL);
@@ -396,6 +444,15 @@ public class HomeFragment extends Fragment {
                             .setPositiveButton("OK", (d,w)->{
                                 String name = etName.getText().toString().trim();
                                 if (!name.isEmpty()) {
+                                    if (name.equalsIgnoreCase("No tag") || name.toLowerCase().startsWith("new tag")) {
+                                        toast("That tag name is reserved — please choose another.");
+                                        return;
+                                    }
+                                    if (name.contains("||||")) {
+                                        toast("Tag name can’t include ||||");
+                                        return;
+                                    }
+
                                     int color = parseColorOr(etHex.getText().toString(), pickedColor[0]);
 
                                     TagStore.addOrUpdate(requireContext(), new TagStore.Tag(name, color));
@@ -506,7 +563,7 @@ public class HomeFragment extends Fragment {
             0xFFBF00FF,
             0xFFFF00FF,
             0xFFFF00BF,
-            0xFFFF0040
+            0xFFFF69B4
     };
 
     private static int dp(View v, int dps) {
@@ -568,29 +625,35 @@ public class HomeFragment extends Fragment {
     private void saveFilter() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
         sp.edit()
-                .putString(PREF_HOME_FILTER + "_tag", filter.tag)
-                .putString(PREF_HOME_FILTER + "_status", filter.status.name())
-                .putString(PREF_HOME_FILTER + "_pMin", filter.pMin == null ? "" : filter.pMin.toString())
-                .putString(PREF_HOME_FILTER + "_pMax", filter.pMax == null ? "" : filter.pMax.toString())
-                .putLong(PREF_HOME_FILTER + "_from", filter.fromMs == null ? -1 : filter.fromMs)
-                .putLong(PREF_HOME_FILTER + "_to",   filter.toMs   == null ? -1 : filter.toMs)
+                .putString(PREF_FILTER_HOME + "_tag", filter.tag)
+                .putString(PREF_FILTER_HOME + "_status", filter.status.name())
+                .putString(PREF_FILTER_HOME + "_pMin", filter.pMin == null ? "" : filter.pMin.toString())
+                .putString(PREF_FILTER_HOME + "_pMax", filter.pMax == null ? "" : filter.pMax.toString())
+                .putLong(PREF_FILTER_HOME + "_from", filter.fromMs == null ? -1 : filter.fromMs)
+                .putLong(PREF_FILTER_HOME + "_to",   filter.toMs   == null ? -1 : filter.toMs)
                 .apply();
     }
 
     private void loadFilter() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        filter.tag = sp.getString(PREF_HOME_FILTER + "_tag", null);
-        try {
-            filter.status = Status.valueOf(sp.getString(PREF_HOME_FILTER + "_status", Status.ANY.name()));
-        } catch (Exception e) { filter.status = Status.ANY; }
 
-        String pMin = sp.getString(PREF_HOME_FILTER + "_pMin", "");
-        String pMax = sp.getString(PREF_HOME_FILTER + "_pMax", "");
+        filter.tag = sp.getString(PREF_FILTER_HOME + "_tag", null);
+
+        try {
+            filter.status = Status.valueOf(
+                    sp.getString(PREF_FILTER_HOME + "_status", Status.ANY.name())
+            );
+        } catch (Exception e) {
+            filter.status = Status.ANY;
+        }
+
+        String pMin = sp.getString(PREF_FILTER_HOME + "_pMin", "");
+        String pMax = sp.getString(PREF_FILTER_HOME + "_pMax", "");
         filter.pMin = pMin.isEmpty() ? null : Double.parseDouble(pMin);
         filter.pMax = pMax.isEmpty() ? null : Double.parseDouble(pMax);
 
-        long from = sp.getLong(PREF_HOME_FILTER + "_from", -1);
-        long to   = sp.getLong(PREF_HOME_FILTER + "_to",   -1);
+        long from = sp.getLong(PREF_FILTER_HOME + "_from", -1);
+        long to   = sp.getLong(PREF_FILTER_HOME + "_to",   -1);
         filter.fromMs = (from == -1 ? null : from);
         filter.toMs   = (to   == -1 ? null : to);
     }

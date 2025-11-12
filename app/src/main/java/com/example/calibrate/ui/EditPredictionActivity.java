@@ -155,7 +155,7 @@ public class EditPredictionActivity extends BaseActivity {
         final EditText etName = new EditText(this);
         etName.setHint("Tag name");
         final EditText etHex  = new EditText(this);
-        etHex.setHint("#RRGGBB or #AARRGGBB");
+        etHex.setHint("Hex code, eg #AARRGGBB");
 
         LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
@@ -271,7 +271,7 @@ public class EditPredictionActivity extends BaseActivity {
         etName.setHint("Tag name");
 
         final EditText etHex  = new EditText(this);
-        etHex.setHint("#RRGGBB or #AARRGGBB");
+        etHex.setHint("Hex code, eg #AARRGGBB");
 
         LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
@@ -359,7 +359,7 @@ public class EditPredictionActivity extends BaseActivity {
             vm.resolve(pid, false);
         }
 
-        String tagLabel = sel.label;
+        String tagLabel = (sel == null || sel.color == 0 || "No tag".equalsIgnoreCase(sel.label)) ? null : sel.label;
         int tagColor = 0;
 
         if (tagLabel != null && !tagLabel.trim().isEmpty()) {
@@ -390,7 +390,7 @@ public class EditPredictionActivity extends BaseActivity {
         final String oldLabel = sel.label;
 
         final EditText etName = new EditText(this); etName.setText(oldLabel);
-        final EditText etHex  = new EditText(this); etHex.setHint("#RRGGBB or #AARRGGBB");
+        final EditText etHex  = new EditText(this); etHex.setHint("Hex code, eg #AARRGGBB");
 
         LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
@@ -472,7 +472,7 @@ public class EditPredictionActivity extends BaseActivity {
             0xFFBF00FF,
             0xFFFF00FF,
             0xFFFF00BF,
-            0xFFFF0040
+            0xFFFF69B4
     };
 
     private static int dp(View anchor, int dps) {
@@ -531,7 +531,7 @@ public class EditPredictionActivity extends BaseActivity {
         etName.setText(existing.label);
 
         final EditText etHex  = new EditText(this);
-        etHex.setHint("#RRGGBB or #AARRGGBB");
+        etHex.setHint("Hex code, eg #AARRGGBB");
         etHex.setText(String.format(java.util.Locale.US, "#%08X", existing.color));
 
         LinearLayout ll = new LinearLayout(this);
@@ -556,38 +556,105 @@ public class EditPredictionActivity extends BaseActivity {
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_Calibrate_Dialog)
                         .setTitle("Edit tag")
                         .setView(ll)
-                        .setPositiveButton("Save", (d,w)->{
-                            String newLabel = etName.getText().toString().trim();
-                            if (newLabel.isEmpty()) newLabel = existing.label;
-                            int newColor = parseColorOr(etHex.getText().toString(), pickedColor[0]);
-
-
-                            TagStore.addOrUpdate(this, new TagStore.Tag(newLabel, newColor));
-                            vm.renameTagEverywhere(existing.label, newLabel, newColor);
-
-                            vSwatch.setBackgroundColor(newColor);
-                        })
+                        .setPositiveButton("Save", null)
                         .setNegativeButton("Cancel", null)
                         .setNeutralButton("Delete", null)
                         .create();
 
-            dlg.setOnShowListener(d -> {
-                TextView del = dlg.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL);
-                del.setOnClickListener(v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_Calibrate_Dialog)
-                        .setTitle("Delete tag?")
-                        .setMessage("Remove this tag from Tag Library and clear it from existing predictions?")
-                        .setPositiveButton("Delete", (d2,w2)->{
-                            vm.clearTagEverywhere(existing.label);
-                            TagStore.remove(this, existing.label);
-                            refreshTagSpinner(null, 0);
-                            android.widget.Toast.makeText(this, "Tag deleted", android.widget.Toast.LENGTH_SHORT).show();
+        dlg.setOnShowListener(d -> {
+            Button btnSave   = dlg.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE);
+            Button btnDelete = dlg.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL);
 
-                            dlg.dismiss();
-                        })
-                        .setNegativeButton("Cancel", (d2,w2)->{})
-                        .show());
+            btnSave.setOnClickListener(v -> {
+                String newLabelRaw = etName.getText() == null ? "" : etName.getText().toString();
+                String newLabel    = newLabelRaw.trim();
+                int    newColor    = parseColorOr(etHex.getText() == null ? "" : etHex.getText().toString(), pickedColor[0]);
+
+                if (isReservedOrInvalidTagName(newLabel)) {
+                    toast("Invalid tag name.");
+                    return;
+                }
+
+                final String oldLabel = existing.label;
+                final int    oldColor = existing.color;
+
+                boolean nameChanged  = !oldLabel.equalsIgnoreCase(newLabel);
+                boolean colorChanged = (oldColor != newColor);
+
+                if (!nameChanged && !colorChanged) {
+                    dlg.dismiss();
+                    return;
+                }
+
+                if (nameChanged) {
+                    TagStore.remove(this, oldLabel);
+                    TagStore.addOrUpdate(this, new TagStore.Tag(newLabel, newColor));
+
+                    vm.renameTagEverywhere(oldLabel, newLabel, newColor);
+
+                    originalTagLabel = newLabel;
+                    originalTagColor = newColor;
+
+                    refreshTagSpinner(newLabel, newColor);
+                    selectTagInSpinnerByLabel(newLabel, newColor);
+                } else {
+                    TagStore.addOrUpdate(this, new TagStore.Tag(oldLabel, newColor));
+                    vm.renameTagEverywhere(oldLabel, oldLabel, newColor);
+
+                    originalTagColor = newColor;
+
+                    refreshTagSpinner(oldLabel, newColor);
+                    selectTagInSpinnerByLabel(oldLabel, newColor);
+                }
+
+                vSwatch.setBackgroundColor(newColor);
+                dlg.dismiss();
             });
 
-            dlg.show();
+            btnDelete.setOnClickListener(v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_Calibrate_Dialog)
+                    .setTitle("Delete tag?")
+                    .setMessage("Remove this tag from Tag Library and clear it from existing predictions?")
+                    .setPositiveButton("Delete", (d2,w2)->{
+                        vm.clearTagEverywhere(existing.label);
+                        TagStore.remove(this, existing.label);
+                        refreshTagSpinner(null, 0);
+                        android.widget.Toast.makeText(this, "Tag deleted", android.widget.Toast.LENGTH_SHORT).show();
+                        dlg.dismiss();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show());
+        });
+
+        dlg.show();
+    }
+
+    private void selectTagInSpinnerByLabel(@NonNull String label, int fallbackColor) {
+        int select = 0;
+        for (int i = 0; i < tagOptions.size(); i++) {
+            TagOpt t = tagOptions.get(i);
+            if (t.color != -1 && t.label.equalsIgnoreCase(label)) { select = i; break; }
+        }
+        spTag.setSelection(select);
+        int color = (select == 0) ? 0 : (tagOptions.get(select).color == 0 ? fallbackColor : tagOptions.get(select).color);
+        vSwatch.setBackgroundColor(color);
+
+        TagOpt sel = tagOptions.get(select);
+        if (sel.color != 0 && sel.color != -1) {
+            lastRealIndex = select;
+            lastRealTag   = sel;
+        } else {
+            lastRealIndex = 0;
+            lastRealTag   = null;
+        }
+    }
+
+    private boolean isReservedOrInvalidTagName(@Nullable String name) {
+        if (name == null) return true;
+        String n = name.trim();
+        if (n.isEmpty()) return true;
+        if (n.equalsIgnoreCase("No tag")) return true;
+        if (n.toLowerCase(Locale.US).startsWith("new tag")) return true;
+        if (n.contains("||||")) return true;
+        return false;
     }
 }

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="wrap_content">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:orientation="vertical"
@@ -45,13 +47,6 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <TextView android:text="@string/tag" android:textStyle="bold"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"/>
-        <Spinner
-            android:id="@+id/spTag"
-            android:layout_width="match_parent" android:layout_height="wrap_content" />
-
         <TextView android:text="@string/probability_range" android:textStyle="bold"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="12dp"/>
@@ -86,5 +81,32 @@
         <Spinner
             android:id="@+id/spStatus"
             android:layout_width="match_parent" android:layout_height="wrap_content" />
+
+        <!-- Tags -->
+        <TextView
+            android:id="@+id/tvTagHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tags"
+            android:layout_marginTop="16dp" />
+
+        <LinearLayout
+            android:id="@+id/tagsHeaderRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+        </LinearLayout>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:singleSelection="false"
+            app:selectionRequired="false"
+            app:chipSpacing="8dp"
+            android:layout_marginTop="8dp"
+            android:paddingBottom="8dp" />
     </LinearLayout>
 </ScrollView>

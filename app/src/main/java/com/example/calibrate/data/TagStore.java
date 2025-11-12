@@ -81,6 +81,12 @@ public class TagStore {
     public static void addOrUpdate(Context ctx, Tag tag) {
         if (tag == null || tag.label == null || tag.label.trim().isEmpty()) return;
 
+        String label = tag.label.trim();
+        if (label.equalsIgnoreCase("No tag") || label.toLowerCase().startsWith("new tag")) {
+            android.widget.Toast.makeText(ctx, "That tag name is reserved.", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         List<Tag> all = new ArrayList<>(getAll(ctx));
         boolean updated = false;
         for (int i = 0; i < all.size(); i++) {

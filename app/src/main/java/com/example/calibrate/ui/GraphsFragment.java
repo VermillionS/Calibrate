@@ -38,12 +38,16 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class GraphsFragment extends Fragment {
 
@@ -324,8 +328,13 @@ public class GraphsFragment extends Fragment {
         if (filter.fromMs != null && p.createdAt < filter.fromMs) return false;
         if (filter.toMs   != null && p.createdAt > filter.toMs)   return false;
 
-        if (filter.tag != null) {
-            if (p.tagLabel == null || !p.tagLabel.equalsIgnoreCase(filter.tag)) return false;
+        if (filter.tag != null && !filter.tag.trim().isEmpty()) {
+            String pt = (p.tagLabel == null) ? "" : p.tagLabel.trim();
+            boolean match = false;
+            for (String want : filter.tag.split("\\|\\|\\|\\|")) {
+                if (pt.equalsIgnoreCase(want.trim())) { match = true; break; }
+            }
+            if (!match) return false;
         }
 
         if (filter.pMin != null && p.probability < filter.pMin) return false;
@@ -347,7 +356,7 @@ public class GraphsFragment extends Fragment {
         EditText etTo   = view.findViewById(R.id.etToDate);
         EditText etMin  = view.findViewById(R.id.etProbMin);
         EditText etMax  = view.findViewById(R.id.etProbMax);
-        Spinner spTag   = view.findViewById(R.id.spTag);
+        ChipGroup chipGroup = view.findViewById(R.id.chipGroupTags);
         Spinner spStatus= view.findViewById(R.id.spStatus);
 
         if (filter.fromMs != null) {
@@ -366,16 +375,30 @@ public class GraphsFragment extends Fragment {
         etFrom.setOnClickListener(v -> pickDate(etFrom));
         etTo.setOnClickListener(v -> pickDate(etTo));
 
-        List<TagStore.Tag> saved = TagStore.getAll(requireContext());
-        List<String> tags = new ArrayList<>();
-        tags.add("Any");
-        for (TagStore.Tag t : saved) tags.add(t.label);
-        ArrayAdapter<String> tagAdapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item, tags);
-        tagAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        spTag.setAdapter(tagAdapter);
-        if (filter.tag != null) {
-            int idx = tags.indexOf(filter.tag);
-            if (idx >= 0) spTag.setSelection(idx);
+        chipGroup.setSingleSelection(false);
+        chipGroup.setSelectionRequired(false);
+
+        Set<String> selected = new HashSet<>();
+        if (filter.tag != null && !filter.tag.trim().isEmpty()) {
+            for (String s : filter.tag.split("\\|\\|\\|\\|")) if (!s.trim().isEmpty()) selected.add(s.trim());
+        }
+
+        List<TagStore.Tag> allTags = TagStore.getAll(requireContext());
+        for (TagStore.Tag t : allTags) {
+            Chip chip = new Chip(requireContext());
+            chip.setText(t.label);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setChecked(selected.contains(t.label));
+            chip.setEnsureMinTouchTargetSize(true);
+            chip.setCheckedIconVisible(true);
+            chip.setChipBackgroundColor(chipBgColors(requireContext()));
+            chip.setTextColor(MaterialColors.getColor(
+                    requireContext(),
+                    com.google.android.material.R.attr.colorOnSurface,
+                    0xFF000000));
+
+            chipGroup.addView(chip);
         }
 
         List<String> statuses = java.util.Arrays.asList(
@@ -457,8 +480,12 @@ public class GraphsFragment extends Fragment {
                     filter.toMs   = parseDateEndMs(etTo.getText());
                     filter.pMin   = parseDouble(etMin.getText());
                     filter.pMax   = parseDouble(etMax.getText());
-                    String selTag = (String) spTag.getSelectedItem();
-                    filter.tag = "Any".equals(selTag) ? null : selTag;
+                    List<String> sel = new ArrayList<>();
+                    for (int i = 0; i < chipGroup.getChildCount(); i++) {
+                        Chip c = (Chip) chipGroup.getChildAt(i);
+                        if (c.isChecked()) sel.add(c.getText().toString());
+                    }
+                    filter.tag = sel.isEmpty() ? null : String.join("||||", sel);
                     scoreType = (spType.getSelectedItemPosition() == 1) ? ScoreType.LOG : ScoreType.BRIER;
 
                     int pos = spStatus.getSelectedItemPosition();
@@ -500,6 +527,19 @@ public class GraphsFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private static android.content.res.ColorStateList chipBgColors(@NonNull android.content.Context ctx) {
+        int checked = MaterialColors.getColor(
+                ctx, com.google.android.material.R.attr.colorSecondaryContainer, 0xFFE0E0E0);
+        int unchecked = MaterialColors.getColor(
+                ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFF2F2F2);
+        return new android.content.res.ColorStateList(
+                new int[][]{
+                        new int[]{android.R.attr.state_checked},
+                        new int[]{}},
+                new int[]{checked, unchecked}
+        );
     }
 
     private void pickDate(EditText target){
