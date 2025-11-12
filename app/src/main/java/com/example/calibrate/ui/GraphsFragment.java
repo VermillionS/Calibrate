@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class GraphsFragment extends Fragment {
 
@@ -329,10 +330,24 @@ public class GraphsFragment extends Fragment {
         if (filter.toMs   != null && p.createdAt > filter.toMs)   return false;
 
         if (filter.tag != null && !filter.tag.trim().isEmpty()) {
-            String pt = (p.tagLabel == null) ? "" : p.tagLabel.trim();
+            String[] parts = filter.tag.split(Pattern.quote("||||"));
+            boolean wantsNoTag = false;
+            List<String> wants = new ArrayList<>();
+            for (String s : parts) {
+                String t = s == null ? "" : s.trim();
+                if (t.isEmpty()) continue;
+                if (t.equalsIgnoreCase("No tag")) wantsNoTag = true;
+                else wants.add(t);
+            }
+
+            String pt = (p.tagLabel == null || p.tagLabel.trim().isEmpty()) ? null : p.tagLabel;
             boolean match = false;
-            for (String want : filter.tag.split("\\|\\|\\|\\|")) {
-                if (pt.equalsIgnoreCase(want.trim())) { match = true; break; }
+            if (pt == null) {
+                match = wantsNoTag;
+            } else {
+                for (String w : wants) {
+                    if (w.equalsIgnoreCase(pt)) { match = true; break; }
+                }
             }
             if (!match) return false;
         }
@@ -380,7 +395,27 @@ public class GraphsFragment extends Fragment {
 
         Set<String> selected = new HashSet<>();
         if (filter.tag != null && !filter.tag.trim().isEmpty()) {
-            for (String s : filter.tag.split("\\|\\|\\|\\|")) if (!s.trim().isEmpty()) selected.add(s.trim());
+            for (String s : filter.tag.split(java.util.regex.Pattern.quote("||||"))) {
+                if (!s.trim().isEmpty()) selected.add(s.trim());
+            }
+        }
+
+        chipGroup.removeAllViews();
+
+        {
+            Chip chip = new Chip(requireContext());
+            chip.setText("No tag");
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setChecked(selected.contains("No tag"));
+            chip.setEnsureMinTouchTargetSize(true);
+            chip.setCheckedIconVisible(true);
+            chip.setChipBackgroundColor(chipBgColors(requireContext()));
+            chip.setTextColor(MaterialColors.getColor(
+                    requireContext(),
+                    com.google.android.material.R.attr.colorOnSurface,
+                    0xFF000000));
+            chipGroup.addView(chip);
         }
 
         List<TagStore.Tag> allTags = TagStore.getAll(requireContext());
@@ -397,7 +432,6 @@ public class GraphsFragment extends Fragment {
                     requireContext(),
                     com.google.android.material.R.attr.colorOnSurface,
                     0xFF000000));
-
             chipGroup.addView(chip);
         }
 
@@ -444,7 +478,7 @@ public class GraphsFragment extends Fragment {
         switch (filter.binSize) {
             case 1:  selBin = 0; break;
             case 2:  selBin = 1; break;
-            case 5: selBin = 2; break;
+            case 5:  selBin = 2; break;
             case 10: selBin = 3; break;
             case 15: selBin = 4; break;
             default: selBin = 3;
@@ -501,7 +535,7 @@ public class GraphsFragment extends Fragment {
                     switch (binPos) {
                         case 0: filter.binSize = 1;  break;
                         case 1: filter.binSize = 2;  break;
-                        case 2: filter.binSize = 5; break;
+                        case 2: filter.binSize = 5;  break;
                         case 3: filter.binSize = 10; break;
                         case 4: filter.binSize = 15; break;
                         default: filter.binSize = 10;
@@ -531,7 +565,7 @@ public class GraphsFragment extends Fragment {
 
     private static android.content.res.ColorStateList chipBgColors(@NonNull android.content.Context ctx) {
         int checked = MaterialColors.getColor(
-                ctx, com.google.android.material.R.attr.colorSecondaryContainer, 0xFFE0E0E0);
+                ctx, com.google.android.material.R.attr.colorPrimary, 0xFFE0E0E0);
         int unchecked = MaterialColors.getColor(
                 ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFF2F2F2);
         return new android.content.res.ColorStateList(

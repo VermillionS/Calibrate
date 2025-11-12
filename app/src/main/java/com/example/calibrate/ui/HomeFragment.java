@@ -36,6 +36,7 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.button.MaterialButton;
 import java.time.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class HomeFragment extends Fragment {
     private PredictionViewModel vm;
@@ -58,7 +59,6 @@ public class HomeFragment extends Fragment {
     }
     enum Status { ANY, RESOLVED, UNRESOLVED, RESOLVED_YES, RESOLVED_NO }
 
-    private static final String PREF_HOME_FILTER = "home_filter";
     private static final String PREF_FILTER_HOME = "home_filter";
 
     @Override public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
@@ -168,10 +168,24 @@ public class HomeFragment extends Fragment {
         if (filter.toMs   != null && p.createdAt > filter.toMs)   return false;
 
         if (filter.tag != null && !filter.tag.trim().isEmpty()) {
-            String pt = (p.tagLabel == null) ? "" : p.tagLabel;
+            String[] parts = filter.tag.split(Pattern.quote("||||"));
+            boolean wantsNoTag = false;
+            List<String> wants = new ArrayList<>();
+            for (String s : parts) {
+                String t = s == null ? "" : s.trim();
+                if (t.isEmpty()) continue;
+                if (t.equalsIgnoreCase("No tag")) wantsNoTag = true;
+                else wants.add(t);
+            }
+
+            String pt = (p.tagLabel == null || p.tagLabel.trim().isEmpty()) ? null : p.tagLabel;
             boolean match = false;
-            for (String want : filter.tag.split("\\|\\|\\|\\|")) {
-                if (want.trim().equalsIgnoreCase(pt)) { match = true; break; }
+            if (pt == null) {
+                match = wantsNoTag;
+            } else {
+                for (String w : wants) {
+                    if (w.equalsIgnoreCase(pt)) { match = true; break; }
+                }
             }
             if (!match) return false;
         }
@@ -237,26 +251,47 @@ public class HomeFragment extends Fragment {
         }
 
         List<TagStore.Tag> allTags = TagStore.getAll(requireContext());
-        for (TagStore.Tag t : allTags) {
-            Chip chip = new Chip(requireContext());
-            chip.setText(t.label);
+        Set<String> selectedTags = new HashSet<>();
+        if (filter.tag != null && !filter.tag.trim().isEmpty()) {
+            for (String s : filter.tag.split(Pattern.quote("||||"))) {
+                String t = s.trim();
+                if (!t.isEmpty()) selectedTags.add(t);
+            }
+        }
 
+        {
+            Chip chip = new Chip(requireContext(), null,
+                    com.google.android.material.R.style.Widget_Material3_Chip_Filter);
+            chip.setText("No tag");
             chip.setCheckable(true);
             chip.setClickable(true);
-            chip.setChecked(selected.contains(t.label));
+            chip.setChecked(selectedTags.contains("No tag"));
             chip.setEnsureMinTouchTargetSize(true);
             chip.setCheckedIconVisible(true);
-
             chip.setChipBackgroundColor(chipBgColors(requireContext()));
             chip.setTextColor(MaterialColors.getColor(
                     requireContext(),
                     com.google.android.material.R.attr.colorOnSurface,
                     0xFF000000));
-
-            chip.setOnCheckedChangeListener((button, isChecked) -> {});
             chipGroup.addView(chip);
         }
 
+        for (TagStore.Tag t : allTags) {
+            Chip chip = new Chip(requireContext(), null,
+                    com.google.android.material.R.style.Widget_Material3_Chip_Filter);
+            chip.setText(t.label);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setChecked(selectedTags.contains(t.label));
+            chip.setEnsureMinTouchTargetSize(true);
+            chip.setCheckedIconVisible(true);
+            chip.setChipBackgroundColor(chipBgColors(requireContext()));
+            chip.setTextColor(MaterialColors.getColor(
+                    requireContext(),
+                    com.google.android.material.R.attr.colorOnSurface,
+                    0xFF000000));
+            chipGroup.addView(chip);
+        }
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Filter predictions")
