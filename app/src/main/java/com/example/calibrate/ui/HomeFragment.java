@@ -337,7 +337,7 @@ public class HomeFragment extends Fragment {
 
     private static android.content.res.ColorStateList chipBgColors(@NonNull android.content.Context ctx) {
         int checked = com.google.android.material.color.MaterialColors.getColor(
-                ctx, com.google.android.material.R.attr.colorSecondaryContainer, 0xFFE0E0E0);
+                ctx, com.google.android.material.R.attr.colorPrimary, 0xFFE0E0E0);
         int unchecked = com.google.android.material.color.MaterialColors.getColor(
                 ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFF2F2F2);
 

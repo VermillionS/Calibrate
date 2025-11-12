@@ -403,7 +403,8 @@ public class GraphsFragment extends Fragment {
         chipGroup.removeAllViews();
 
         {
-            Chip chip = new Chip(requireContext());
+            Chip chip = new Chip(requireContext(), null,
+                    com.google.android.material.R.style.Widget_Material3_Chip_Filter);
             chip.setText("No tag");
             chip.setCheckable(true);
             chip.setClickable(true);
@@ -420,7 +421,8 @@ public class GraphsFragment extends Fragment {
 
         List<TagStore.Tag> allTags = TagStore.getAll(requireContext());
         for (TagStore.Tag t : allTags) {
-            Chip chip = new Chip(requireContext());
+            Chip chip = new Chip(requireContext(), null,
+                    com.google.android.material.R.style.Widget_Material3_Chip_Filter);
             chip.setText(t.label);
             chip.setCheckable(true);
             chip.setClickable(true);
@@ -564,10 +566,11 @@ public class GraphsFragment extends Fragment {
     }
 
     private static android.content.res.ColorStateList chipBgColors(@NonNull android.content.Context ctx) {
-        int checked = MaterialColors.getColor(
+        int checked = com.google.android.material.color.MaterialColors.getColor(
                 ctx, com.google.android.material.R.attr.colorPrimary, 0xFFE0E0E0);
-        int unchecked = MaterialColors.getColor(
+        int unchecked = com.google.android.material.color.MaterialColors.getColor(
                 ctx, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFF2F2F2);
+
         return new android.content.res.ColorStateList(
                 new int[][]{
                         new int[]{android.R.attr.state_checked},
