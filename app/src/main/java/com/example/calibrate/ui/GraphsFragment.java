@@ -232,19 +232,20 @@ public class GraphsFragment extends Fragment {
         }
         if (n <= 0) return;
 
-        int visible = Math.min(n, 100);
+        int defaultVisible = Math.min(n, 100);
 
         XAxis x = chart.getXAxis();
         x.setAxisMinimum(0f);
         x.setAxisMaximum(Math.max(0, n - 1));
 
         chart.setAutoScaleMinMaxEnabled(true);
-
         chart.fitScreen();
-        chart.setVisibleXRangeMaximum(visible - 1 <= 0 ? 1f : (visible - 1));
-        chart.setVisibleXRangeMinimum(visible - 1 <= 0 ? 1f : (visible - 1));
+        if (defaultVisible > 1) {
+            chart.setVisibleXRangeMaximum(defaultVisible - 1);
 
-        float targetLeft = Math.max(0, n - visible);
+        }
+
+        float targetLeft = Math.max(0, n - defaultVisible);
         chart.moveViewToX(targetLeft);
 
         chart.invalidate();

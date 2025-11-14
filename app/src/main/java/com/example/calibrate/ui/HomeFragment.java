@@ -606,6 +606,24 @@ public class HomeFragment extends Fragment {
         return Math.round(dps * den);
     }
 
+    private void hydrateTagsFromPredictionsIfNeeded() {
+        List<TagStore.Tag> existing = TagStore.getAll(requireContext());
+        if (existing != null && !existing.isEmpty()) return;
+
+        if (all == null) return;
+        Set<String> seen = new HashSet<>();
+        for (Prediction p : all) {
+            if (p == null) continue;
+            String lbl = (p.tagLabel == null) ? "" : p.tagLabel.trim();
+            if (lbl.isEmpty()) continue;
+            // de-dup case-insensitively
+            String key = lbl.toLowerCase(Locale.US);
+            if (seen.add(key)) {
+                TagStore.addOrUpdate(requireContext(), new TagStore.Tag(lbl, p.tagColor));
+            }
+        }
+    }
+
     private static View buildColorGrid(View anchorForDp, int[] palette, int initiallySelectedColor,
                                        java.util.function.IntConsumer onPick) {
         android.widget.GridLayout grid = new android.widget.GridLayout(anchorForDp.getContext());

@@ -9,8 +9,11 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class TagStore {
     private static final String PREFS = "calibrator_tags";
@@ -173,4 +176,34 @@ public class TagStore {
         return ignoreCase ? a.equalsIgnoreCase(b) : a.equals(b);
     }
 
+    public static void hydrateFromPredictions(Context ctx, List<Prediction> imported) {
+        if (imported == null || imported.isEmpty()) return;
+
+        Map<String, TagStore.Tag> toAdd = new HashMap<>();
+
+        for (com.example.calibrate.data.Prediction p : imported) {
+            if (p == null) continue;
+            String raw = p.tagLabel;
+            if (raw == null) continue;
+            String label = raw.trim();
+            if (label.isEmpty()) continue;
+
+            if (label.equalsIgnoreCase("No tag")) continue;
+            if (label.toLowerCase(Locale.US).startsWith("new tag")) continue;
+            if (label.contains("||||")) continue;
+
+            if (toAdd.containsKey(label)) continue;
+            if (get(ctx, label) != null) continue;
+
+            int color = (p.tagColor == 0) ? 0 : p.tagColor;
+            toAdd.put(label, new Tag(label, color));
+        }
+
+        if (!toAdd.isEmpty()) {
+            List<Tag> all = new ArrayList<>(getAll(ctx));
+            all.addAll(toAdd.values());
+            sortByLabel(all);
+            writeAll(ctx, all);
+        }
+    }
 }

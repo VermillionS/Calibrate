@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 import com.example.calibrate.R;
 import com.example.calibrate.data.Prediction;
+import com.example.calibrate.data.TagStore;
 import com.example.calibrate.vm.PredictionViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.json.JSONArray;
@@ -200,6 +201,7 @@ public class SettingsFragment extends Fragment {
                     out.add(p);
                 }
                 vm.importReplaceAll(out);
+                TagStore.hydrateFromPredictions(requireContext(), out);
                 runOnUi(() -> Toast.makeText(requireContext(), "Imported " + out.size() + " predictions", Toast.LENGTH_SHORT).show());
             } catch (Exception e) {
                 runOnUi(() -> Toast.makeText(requireContext(), "Import failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
