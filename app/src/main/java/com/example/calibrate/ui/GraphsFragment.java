@@ -137,7 +137,7 @@ public class GraphsFragment extends Fragment {
         } else if (showScore) {
             LineData sdata = buildScoreSeries(subset);
             if (isEmpty(sdata)) { showEmpty(); return; }
-            styleGenericLineChart(chart, sdata, "Rolling average and Individual Brier / LogLoss");
+            styleGenericLineChart(chart, sdata, " ");
             adjustScoreViewport(chart, sdata);
             showChart();
         }
@@ -205,8 +205,8 @@ public class GraphsFragment extends Fragment {
                 ? "Log loss (rolling average)"
                 : "Brier Score (rolling average)";
         String labelInst = (scoreType == ScoreType.LOG)
-                ? "Log loss (individual)"
-                : "Brier Score (individual)";
+                ? "Log loss (individual prediction)"
+                : "Brier Score (individual prediction)";
 
         LineDataSet dsInst = new LineDataSet(instant, labelInst);
         dsInst.setLineWidth(2f);
@@ -278,7 +278,7 @@ public class GraphsFragment extends Fragment {
         if (descText != null) {
             float m = Math.max(0.001f, maxY(data));
             float top = (m <= 1f) ? Math.max(1f, m * 1.15f) : Math.min(10f, m * 1.15f);
-            l.setAxisMinimum(-0.1f);
+            l.setAxisMinimum(-0.05f);
             l.setAxisMaximum(top);
             l.setGranularityEnabled(true);
             l.setGranularity(top <= 1f ? 0.1f : 0.2f);
@@ -659,7 +659,7 @@ public class GraphsFragment extends Fragment {
         );
 
         Description d = new Description();
-        d.setText(getString(R.string.chart_desc));
+        d.setText(" ");
         chart.setDescription(d);
         chart.setData(data);
 
@@ -756,30 +756,73 @@ public class GraphsFragment extends Fragment {
         YAxis left = bar.getAxisLeft();
         YAxis right = bar.getAxisRight();
         left.setTextColor(axisTextColor);
-        left.setAxisMinimum(-0.5f);
         right.setTextColor(axisTextColor);
         right.setEnabled(false);
 
         final int total = totalCountFromData(data);
-        data.setValueTextColor(axisTextColor);
-        data.setValueTextSize(12f);
-        data.setValueFormatter(new ValueFormatter() {
-            @Override public String getBarLabel(BarEntry barEntry) {
-                if (total <= 0) return String.valueOf((int)barEntry.getY());
-                float pct = 100f * (barEntry.getY() / total);
-                return String.format(Locale.US, "%d (%.0f%%)", (int)barEntry.getY(), pct);
+
+        final class AdaptiveValueFormatter extends ValueFormatter {
+            boolean showValues = true;
+            boolean showPercent = true;
+
+            @Override public String getBarLabel(BarEntry e) {
+                if (!showValues) return "";
+                int count = (int) e.getY();
+                if (total <= 0) return String.valueOf(count);
+                float pct = 100f * (e.getY() / total);
+                return showPercent ? String.format(Locale.US, "%d (%.0f%%)", count, pct)
+                        : String.format(Locale.US, "%d", count);
             }
-        });
+        }
+        final AdaptiveValueFormatter vf = new AdaptiveValueFormatter();
+
+        data.setValueTextColor(axisTextColor);
+        data.setValueTextSize(10f);
+        for (int i = 0; i < data.getDataSetCount(); i++) {
+            data.getDataSetByIndex(i).setValueFormatter(vf);
+        }
 
         Legend legend = bar.getLegend();
         legend.setTextColor(axisTextColor);
 
         Description d = new Description();
-        d.setText("Number of predictions in each bin and percentage of total predictions");
+        d.setText(" ");
         d.setTextColor(axisTextColor);
         bar.setDescription(d);
-
         bar.setFitBars(true);
+        bar.setExtraTopOffset(10f);
+
+        final Runnable applyAdaptive = () -> {
+            float scaleX = bar.getViewPortHandler().getScaleX();
+            boolean tooDense = (bins > 40 && scaleX < 2f) || (bins > 20 && scaleX < 1.3f);
+
+            vf.showValues = !tooDense;
+            if (!vf.showValues) {
+                vf.showPercent = false;
+            } else if (scaleX < 1.9f) {
+                vf.showPercent = false;
+            } else {
+                vf.showPercent = true;
+            }
+
+            for (int i = 0; i < data.getDataSetCount(); i++) {
+                data.getDataSetByIndex(i).setDrawValues(vf.showValues);
+            }
+            bar.invalidate();
+        };
+
+        applyAdaptive.run();
+        bar.setOnChartGestureListener(new com.github.mikephil.charting.listener.OnChartGestureListener() {
+            @Override public void onChartScale(android.view.MotionEvent me, float scaleX, float scaleY) { applyAdaptive.run(); }
+            @Override public void onChartGestureStart(android.view.MotionEvent me, com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture lastPerformedGesture) {}
+            @Override public void onChartGestureEnd(android.view.MotionEvent me, com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture lastPerformedGesture) {}
+            @Override public void onChartLongPressed(android.view.MotionEvent me) {}
+            @Override public void onChartDoubleTapped(android.view.MotionEvent me) {}
+            @Override public void onChartSingleTapped(android.view.MotionEvent me) {}
+            @Override public void onChartFling(android.view.MotionEvent me1, android.view.MotionEvent me2, float velocityX, float velocityY) {}
+            @Override public void onChartTranslate(android.view.MotionEvent me, float dX, float dY) {}
+        });
+
         bar.invalidate();
     }
 
