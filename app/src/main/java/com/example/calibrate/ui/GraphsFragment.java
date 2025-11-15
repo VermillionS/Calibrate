@@ -471,7 +471,7 @@ public class GraphsFragment extends Fragment {
         rootCol.addView(tvBin);
 
         Spinner spBin = new Spinner(requireContext());
-        String[] binOpts = new String[]{"1%", "2%", "5%", "10%", "15%"};
+        String[] binOpts = new String[]{"1%", "2%", "5%", "10%", "20%"};
         ArrayAdapter<String> binAdapter =
                 new ArrayAdapter<>(requireContext(), R.layout.spinner_item, binOpts);
         binAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
@@ -483,7 +483,7 @@ public class GraphsFragment extends Fragment {
             case 2:  selBin = 1; break;
             case 5:  selBin = 2; break;
             case 10: selBin = 3; break;
-            case 15: selBin = 4; break;
+            case 20: selBin = 4; break;
             default: selBin = 3;
         }
         spBin.setSelection(selBin);
@@ -540,7 +540,7 @@ public class GraphsFragment extends Fragment {
                         case 1: filter.binSize = 2;  break;
                         case 2: filter.binSize = 5;  break;
                         case 3: filter.binSize = 10; break;
-                        case 4: filter.binSize = 15; break;
+                        case 4: filter.binSize = 20; break;
                         default: filter.binSize = 10;
                     }
 
@@ -556,6 +556,7 @@ public class GraphsFragment extends Fragment {
                     filter.tag=null;
                     filter.status=Status.ANY;
                     filter.binSize = 10;
+                    scoreType = ScoreType.BRIER;
                     chart.clear();
                     sharpnessChart.clear();
                     renderFiltered();
@@ -755,6 +756,7 @@ public class GraphsFragment extends Fragment {
         YAxis left = bar.getAxisLeft();
         YAxis right = bar.getAxisRight();
         left.setTextColor(axisTextColor);
+        left.setAxisMinimum(-0.5f);
         right.setTextColor(axisTextColor);
         right.setEnabled(false);
 
