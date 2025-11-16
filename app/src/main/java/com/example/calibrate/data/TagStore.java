@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public class TagStore {
-    private static final String PREFS = "calibrator_tags";
     private static final String KEY = "tags_json";
 
     public static final class Tag {
@@ -65,20 +64,6 @@ public class TagStore {
 
         sortByLabel(out);
         return out;
-    }
-
-    public static void saveAll(Context ctx, List<Tag> tags) {
-        JSONArray arr = new JSONArray();
-        for (Tag t : tags) {
-            JSONObject o = new JSONObject();
-            try {
-                o.put("label", t.label);
-                o.put("color", t.color);
-                arr.put(o);
-            } catch (Exception ignored) {}
-        }
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .edit().putString(KEY, arr.toString()).apply();
     }
 
     public static void addOrUpdate(Context ctx, Tag tag) {
@@ -131,19 +116,6 @@ public class TagStore {
             if (safeEq(t.label, label, true)) return t;
         }
         return null;
-    }
-
-    public static void setAll(Context ctx, List<Tag> tags) {
-        if (tags == null) tags = Collections.emptyList();
-        List<Tag> copy = new ArrayList<>(tags.size());
-        for (Tag t : tags) {
-            if (t == null || t.label == null) continue;
-            String lab = t.label.trim();
-            if (lab.isEmpty()) continue;
-            copy.add(new Tag(lab, t.color));
-        }
-        sortByLabel(copy);
-        writeAll(ctx, copy);
     }
 
     private static void writeAll(Context ctx, List<Tag> tags) {

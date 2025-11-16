@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Calibrate</string>
-    <string name="hint_prediction_title">Prediction (e.g., “It rains tomorrow”)</string>
+    <string name="hint_prediction_title">Prediction Title</string>
     <string name="hint_probability">Probability (0–100)%</string>
     <string name="btn_save">Save</string>
     <string name="btn_cancel">Cancel</string>
@@ -26,8 +26,8 @@
     <string name="save">Save</string>
     <string name="description_optional">Description (optional)</string>
     <string name="date_range">Date range</string>
-    <string name="from_yyyy_mm_dd">From (yyyy-MM-dd)</string>
-    <string name="to_yyyy_mm_dd">To (yyyy-MM-dd)</string>
+    <string name="from_yyyy_mm_dd">Date From</string>
+    <string name="to_yyyy_mm_dd">Date To</string>
     <string name="probability_range">Probability range (%)</string>
     <string name="min">Min</string>
     <string name="max">Max</string>

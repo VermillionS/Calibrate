@@ -42,10 +42,6 @@ public class PredictionViewModel extends AndroidViewModel {
         repo.add(title, prob, desc, tagLabel, tagColor);
     }
 
-    public void addPrediction(String title, double prob, @Nullable String tagLabel, int tagColor) {
-        addPrediction(title, prob, null, tagLabel, tagColor);
-    }
-
     public List<Prediction> exportAllSync() { return repo.getAllSync(); }
     public void importReplaceAll(List<Prediction> list) { repo.replaceAll(list); }
     public void deleteAll() { repo.deleteAll(); }

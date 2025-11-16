@@ -381,55 +381,6 @@ public class EditPredictionActivity extends BaseActivity {
                 .show();
     }
 
-    private void editTagEverywhere() {
-        TagOpt sel = (TagOpt) spTag.getSelectedItem();
-        if (sel == null || sel.label == null || sel.color == 0) {
-            Toast.makeText(this, "Pick a tag first", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        final String oldLabel = sel.label;
-
-        final EditText etName = new EditText(this); etName.setText(oldLabel);
-        final EditText etHex  = new EditText(this); etHex.setHint("Hex code, eg #AARRGGBB");
-
-        LinearLayout ll = new LinearLayout(this);
-        ll.setOrientation(LinearLayout.VERTICAL);
-        ll.setPadding(24,16,24,0);
-        ll.addView(etName); ll.addView(etHex);
-
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Edit tag everywhere")
-                .setView(ll)
-                .setPositiveButton("Apply", (d,w)->{
-                    String newLabel = sanitizeTitle(etName.getText().toString());
-                    if (newLabel.isEmpty()) newLabel = oldLabel;
-                    int newColor = parseColorOr(etHex.getText().toString(), sel.color);
-
-                    TagStore.addOrUpdate(this, new TagStore.Tag(newLabel, newColor));
-                    vm.bulkUpdateTag(oldLabel, newLabel, newColor);
-
-                    rebuildTagListAndReselect(newLabel, newColor);
-                })
-                .setNegativeButton("Cancel", (d,w)->{})
-                .show();
-    }
-
-    private void rebuildTagListAndReselect(String label, int color) {
-        List<TagStore.Tag> saved = TagStore.getAll(this);
-        tagOptions.clear();
-        tagOptions.add(new TagOpt("No tag", 0));
-        int select = 0;
-        for (int i = 0; i < saved.size(); i++) {
-            TagStore.Tag t = saved.get(i);
-            tagOptions.add(new TagOpt(t.label, t.color));
-            if (t.label.equalsIgnoreCase(label)) select = i + 1;
-        }
-        tagOptions.add(new TagOpt("New tag…", -1));
-        tagAdapter.notifyDataSetChanged();
-        spTag.setSelection(select);
-        vSwatch.setBackgroundColor(color == 0 ? 0x00000000 : color);
-    }
-
     private static String sanitizeTitle(String s) {
         if (s == null) return "";
         s = s.replaceAll("\\p{Cntrl}", "");

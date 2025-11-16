@@ -1,7 +1,6 @@
 package com.example.calibrate.data;
 
 import androidx.appcompat.app.AppCompatDelegate;
-
 import com.example.calibrate.R;
 
 public class App extends android.app.Application {
